@@ -8,6 +8,7 @@ let s:modulelevel = '^#\?[A-Z_0-9]\+\s*='
 let s:opening = '[({:\[]\s*$'
 let s:closing = '^\s*[)}\]]\+\s*$'
 let s:def = '^\s*\(class\|def\)\s\S'
+let s:multiline_def = s:def . '.*\(,\|(\)\s*$'
 let s:decorator = '^\s*#\?\s*@'
 let s:docstring = '^\s*' . ds
 let s:oneline_docstring = s:docstring . '[^"]\+'. ds .'\s*$'
@@ -81,6 +82,11 @@ function! PythonFold(lnum)
     return '>' . level
   endif
 
+  " If we are on the opening statment of a multiline def, we start a new foldj
+  if line =~ s:multiline_def
+    return '>' . level
+  endif
+
   " }}}
   " Docstrings {{{2
 
@@ -119,6 +125,14 @@ function! PythonFold(lnum)
   " a line with the first decorator for a class or a function
   " both start a new fold
   if line =~ s:opening
+    " If the opener is the opener of a multiline def, just continue that fold
+    " Check up to ten lines above, limited for performance.
+    for x in range(10)
+      if getline(a:lnum - x) =~ s:multiline_def
+        return '='
+      endif
+    endfor
+
     return '>' . level
   endif
 

@@ -5,7 +5,7 @@ let ds = '\("""\|'."'''".'\)'
 
 let s:import = '^\(#\s*\)\?\(import\|from\)'
 let s:modulelevel = '^#\?[A-Z_0-9]\+\s*='
-let s:opening = '[({:\[]\s*$'
+let s:opening = '[({:\[]\s*\(#.*\)\?$'
 let s:closing = '^\s*[)}\]]\+\s*$'
 let s:def = '^\s*\(class\|def\)\s\S'
 let s:multiline_def = s:def . '.*\(,\|(\)\s*$'

@@ -1,6 +1,11 @@
 let s:opening = '[({:\[]\s*\(#.*\)\?$'
 let s:closing = '^\s*[)}\]]\+\s*$'
 
+function! s:debug(s)
+  echo a:s
+  call append('$', a:s)
+endfunction
+
 function! s:strip(s, ...)
   let string = a:0 ? substitute(a:s, ',\s*$', '', 'g') : a:s
   return substitute(string, '\(^\s*\|\s*$\)', '', 'g')
@@ -18,6 +23,7 @@ function! PythonFormatExpr(lnum, count, char) abort
   let linelength = len(line)
   let shift = indent(a:lnum)
   let insertion = a:char != ""
+  let pos = getpos('.')
 
   " Not yet above the textwidth and an insertion has been made;
   " nothing should be done.
@@ -44,12 +50,20 @@ function! PythonFormatExpr(lnum, count, char) abort
     " Set the line to the newly formatted ones
     call s:replace(a:lnum, data)
 
-    let pos = getpos('.')
     if insertion
       " If this was an insertion, make sure to retain the cursor position.
-      let offset = linelength - len(start)
-      let pos[1] += len(data) - 2 " Line should be bottom-most content line
-      let pos[2] = data[-2] =~ "['\"],$" ? len(data[-2]) - 1 : len(data[-2])
+      let line_offset = 1
+      let col_offset = pos[2] - len(start)
+
+      " Calculate where to put the cursor. Decrease the column offset until
+      while col_offset > len(s:strip(data[line_offset]))
+        " The +1 is to account for the last space
+        let col_offset -= len(s:strip(data[line_offset])) + 1
+        let line_offset += 1
+      endwhile
+
+      let pos[1] += line_offset
+      let pos[2] = shift + &sw + col_offset
     else
       " If not, place the cursor on the beginning of the first item line
       let pos[1] += 1

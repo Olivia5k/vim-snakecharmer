@@ -1,6 +1,16 @@
+let s:opening = '[({:\[]\s*\(#.*\)\?$'
+let s:closing = '^\s*[)}\]]\+\s*$'
+
 function! s:strip(s, ...)
   let string = a:0 ? substitute(a:s, ',\s*$', '', 'g') : a:s
   return substitute(string, '\(^\s*\|\s*$\)', '', 'g')
+endfunction
+
+function! s:replace(lnum, data)
+  call setline(a:lnum, a:data[0])
+  if len(a:data) > 1
+    call append(a:lnum, a:data[1:])
+  endif
 endfunction
 
 function! PythonFormatExpr(lnum, count, char) abort
@@ -15,9 +25,9 @@ function! PythonFormatExpr(lnum, count, char) abort
     return
   endif
 
-  let match = matchlist(line, '^\(.*[({\[]\)\(.\{-}\)\([)}\]]\s*\)\?$')
+  " If this matches, we have a long statement that is over the line
+  let match = matchlist(line, '^\(.*[({\[]\)\(.\{-}\)\([)}\]]\s*\)$')
   if match != []
-
     let start = match[1]
     let end = match[3]
 
@@ -32,14 +42,43 @@ function! PythonFormatExpr(lnum, count, char) abort
     let data = add(data, end)
 
     " Set the line to the newly formatted ones
-    call setline(a:lnum, data)
+    call s:replace(a:lnum, data)
 
-    " If this was an insertion, make sure to retain the cursor position.
+    let pos = getpos('.')
     if insertion
-      let pos = getpos('.')
-      let pos[1] += len(data) - 2
-      let pos[2] = match(data[-2], '"\?,') + 1
-      call setpos('.', pos)
+      " If this was an insertion, make sure to retain the cursor position.
+      let offset = linelength - len(start)
+      let pos[1] += len(data) - 2 " Line should be bottom-most content line
+      let pos[2] = data[-2] =~ "['\"],$" ? len(data[-2]) - 1 : len(data[-2])
+    else
+      " If not, place the cursor on the beginning of the first item line
+      let pos[1] += 1
+      let pos[2] = shift + &sw + 1
+    endif
+    call setpos('.', pos)
+    return
+  endif
+
+  if a:count
+    let lines = getline(a:lnum, a:lnum + a:count - 1)
+    " Check if we are formatting a block that looks like a long call
+    if lines[0] =~ s:opening && lines[-1] =~ s:closing
+      let content = join(map(lines[1:-2], "s:strip(v:val, 1)"), ', ')
+      let closer = s:strip(lines[-1])
+      let final = lines[0] . content . closer
+
+      " If the compressed line is short enough to fit on one line, just fold
+      " them all back into one.
+      if len(final) < &tw
+        exe '.+1,.+'.(a:count - 1).'delete'
+        call setline(a:lnum, final)
+
+        " Reset the position to be on the beginning of the first argument
+        let pos = getpos('.')
+        let pos[1] = a:lnum
+        let pos[2] = len(lines[0]) + 1
+        call setpos('.', pos)
+      endif
     endif
   endif
 endfunction
@@ -47,8 +86,3 @@ endfunction
 if &ft == "python"
   setl fex=PythonFormatExpr\(v:lnum,\ v:count,\ v:char\)
 endif
-
-augroup pythonexpr
-  au!
-  au BufWritePost format.vim so %
-augroup END

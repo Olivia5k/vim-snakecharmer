@@ -11,6 +11,10 @@ function! s:strip(s, ...)
   return substitute(string, '\(^\s*\|\s*$\)', '', 'g')
 endfunction
 
+function! s:indent(lines, shift)
+  return map(a:lines, 'repeat(" ", a:shift + &sw) . s:strip(v:val) . ","')
+endfunction
+
 function! s:replace(lnum, data)
   call setline(a:lnum, a:data[0])
   if len(a:data) > 1
@@ -38,9 +42,8 @@ function! PythonFormatExpr(lnum, count, char) abort
     let end = match[3]
 
     let spl = split(match[2], ',\s*')
-    let data = map(spl, 'repeat(" ", shift + &sw) . s:strip(v:val) . ","')
+    let data = insert(s:indent(spl, shift), start)
 
-    let data = insert(data, start)
     if end == ""
       let end = ")"
     endif
@@ -77,9 +80,13 @@ function! PythonFormatExpr(lnum, count, char) abort
     let lines = getline(a:lnum, a:lnum + a:count - 1)
     " Check if we are formatting a block that looks like a long call
     if lines[0] =~ s:opening && lines[-1] =~ s:closing
-      let content = join(map(lines[1:-2], "s:strip(v:val, 1)"), ', ')
+      let content = []
+      for line in lines[1:-2]
+        let content = extend(content, split(line, ','))
+      endfor
+      let content = map(content, "s:strip(v:val, 1)")
       let closer = s:strip(lines[-1])
-      let final = lines[0] . content . closer
+      let final = lines[0] . join(content, ', ') . closer
 
       " If the compressed line is short enough to fit on one line, just fold
       " them all back into one.
@@ -92,6 +99,15 @@ function! PythonFormatExpr(lnum, count, char) abort
         let pos[1] = a:lnum
         let pos[2] = len(lines[0]) + 1
         call setpos('.', pos)
+      else
+        exe 'silent .+1,.+'.(a:count - 1).'delete'
+        let content = s:indent(content, shift)
+        let data = lines[0:0] + content + lines[-1:-1]
+        call s:replace(a:lnum, data)
+
+        " If not, place the cursor on the beginning of the first item line
+        let pos[1] += 1
+        let pos[2] = shift + &sw + 1
       endif
     endif
   endif

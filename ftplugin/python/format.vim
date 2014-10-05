@@ -113,6 +113,6 @@ function! PythonFormatExpr(lnum, count, char) abort
   endif
 endfunction
 
-if &ft == "python"
+if &ft == "python" && exists('g:snakeskin_formatting')
   setl fex=PythonFormatExpr\(v:lnum,\ v:count,\ v:char\)
 endif

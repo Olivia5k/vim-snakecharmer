@@ -66,3 +66,62 @@ function! s:get_indent(lnr) " {{{
   let line = getline(a:lnr)
   return matchstr(line, '^\(\s*\)') . '    '
 endfunction " }}}
+
+" Function that looks at the above test to see if there are mocks, and if so
+" checks if the mock arguments have been properly provided
+function! SnakeMockArgs() " {{{
+  if getline('.') =~ '@mock.patch('
+    let test_lnr = search('def test_', 'n')
+  else
+    let fn = expand('%')
+    let skin = SnakeskinParse(fn)
+
+    if skin.position()[-1] !~ '^test_'
+      return
+    endif
+    let test_lnr = search('def test_', 'bn')
+  endif
+
+  let mocks = s:get_mocks(test_lnr - 1)
+  let args = map(mocks, 's:clean_mock_arg(v:val)')
+  let args = insert(args, 'self')
+
+  let test = getline(test_lnr)
+  let rep = '\1' . join(args, ', ') . '\3'
+  let res = substitute(test, '\(.*(\)\(.*\)\():\)', rep, '')
+
+  if res != test
+    call setline(test_lnr, res)
+  endif
+endfunction
+
+function! s:get_mocks(lnr) " {{{
+  let mocks = []
+  let lnr = a:lnr
+
+  let line = getline(lnr)
+  while line =~ '@mock.patch('
+    " Ignore commented mocks
+    if line !~ '^\s\+#'
+      let mocks = add(mocks, line)
+    endif
+
+    let lnr -= 1
+    let line = getline(lnr)
+  endwhile
+
+  return mocks
+endfunction " }}}
+
+function! s:clean_mock_arg(arg) " {{{
+  let arg = a:arg[17:]
+  let arg = arg[:-3]
+  let arg = split(arg, '\.')[-1]
+
+  " If the arg contains underscores, compress it from `arg_func` to `af`
+  if arg =~ '_'
+    let arg = join(map(split(arg, '_'), 'v:val[0]'), '')
+  endif
+
+  return arg
+endfunction " }}}

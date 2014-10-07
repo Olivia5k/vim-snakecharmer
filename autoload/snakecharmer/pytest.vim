@@ -1,16 +1,12 @@
 function! snakecharmer#pytest#Switch(...) " {{{
   let print = a:0 > 2 ? a:3 : 1
   let runit = a:0 > 3 ? a:4 : 1
-  let dir = s:dir()
+  let dir = s:dir('switches/')
   let target = a:0 ? a:1 : ""
   let file = dir . '/' . target
 
   if print
-    echohl PreProc | echon 'Pytest' | echohl None | echon ": "
-  endif
-
-  if !isdirectory(dir)
-    call mkdir(dir)
+    echohl PreProc | echon 'SnakeTest' | echohl None | echon ": "
   endif
 
   " No arguments, print current
@@ -53,8 +49,7 @@ function! snakecharmer#pytest#Switch(...) " {{{
 endfunction " }}}
 
 function! snakecharmer#pytest#Run() " {{{
-  let fn = getcwd() . '/.git/snakecharmer.fifo'
-  call writefile(['bang bang'], fn)
+  call writefile(['run'], s:dir('fifo'))
   doau BufWritePost
 endfunction " }}}
 
@@ -276,13 +271,25 @@ function! s:camelize(s) " {{{
   return substitute(a:s, pat , '\u\1\2', 'g')
 endfunction " }}}
 
-function! s:dir() " {{{
-  return getcwd() . '/.git/snakecharmer'
+function! s:dir(...) " {{{
+  let ret = getcwd() . '/.git/snakecharmer'
+  if !isdirectory(ret)
+    call mkdir(ret, 'p')
+  endif
+
+  if len(a:000) != 0
+    let ret .= '/' . a:1
+    if ret =~ '/$' && !isdirectory(ret)
+      call mkdir(ret, 'p')
+    endif
+  endif
+
+  return ret
 endfunction " }}}
 
-function! s:reset_flags(flags) " {{{
+function! s:reset_flags(flags) abort " {{{
   call clearmatches()
-  let dir = s:dir()
+  let dir = s:dir('switches/')
 
   " Kill all the old flags
   for fn in split(globpath(dir, '*'), '\n')
@@ -293,7 +300,6 @@ function! s:reset_flags(flags) " {{{
 
   " Set the new flags
   for [fn, lines] in items(a:flags)
-    echo fn lines
     call writefile(lines, dir . '/' . fn, "b")
   endfor
 

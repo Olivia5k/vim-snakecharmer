@@ -20,7 +20,7 @@ function! snakecharmer#pytest#PytestSwitch(...)
   " No arguments, print current
   if target == ""
     if print
-      echon PytestCurrent()
+      echon snakecharmer#pytest#PytestCurrent()
     endif
     return
   endif
@@ -52,7 +52,7 @@ function! snakecharmer#pytest#PytestSwitch(...)
 
   " Retrigger the tests
   if runit == 1
-    call PytestRun()
+    call snakecharmer#pytest#PytestRun()
   endif
 endfunction
 
@@ -92,8 +92,8 @@ function! snakecharmer#pytest#PytestComplete(a,l,p)
   return filter(copy(args), 'v:val =~ "^'.a:a.'"')
 endfunction
 
-command! -nargs=* -complete=customlist,PytestComplete PytestSwitch :call PytestSwitch(<f-args>)
-command! -nargs=* -complete=customlist,PytestComplete PS :call PytestSwitch(<f-args>)
+command! -nargs=* -complete=customlist,PytestComplete PytestSwitch :call snakecharmer#pytest#PytestSwitch(<f-args>)
+command! -nargs=* -complete=customlist,PytestComplete PS :call snakecharmer#pytest#PytestSwitch(<f-args>)
 
 if exists('*airline#extensions#pytest#get_current')
   let g:airline_section_y = '%= %{airline#util#wrap(airline#extensions#pytest#get_current(),0)}'
@@ -112,25 +112,25 @@ function! snakecharmer#pytest#Sharpshooter() " {{{
 
   let fn = expand('%')
   if fn =~ 'test/.*'
-    let pos = SnakeskinParse(fn).position()
+    let pos = snakecharmer#pytest#SnakeskinParse(fn).position()
 
     " Check if the current function follows the default py.test pattern.
     if pos != [] && pos[0] =~ '^Test' && pos[1] =~ '^test_'
       " If it does, store it as the only test to execute...
-      call PytestSwitch('k', join(pos, ' and '), 0, 0)
-      call PytestSwitch('file', fn, 0, 1)
+      call snakecharmer#pytest#PytestSwitch('k', join(pos, ' and '), 0, 0)
+      call snakecharmer#pytest#PytestSwitch('file', fn, 0, 1)
 
       " ...and highlight the name in the buffer.
-      call HiInterestingWord(1, pos[1])
+      call snakecharmer#pytest#HiInterestingWord(1, pos[1])
       return
     endif
   endif
 
   " If we're not setting a new test, just execute the last set one
-  call PytestRun()
+  call snakecharmer#pytest#PytestRun()
 endfunction " }}}
 
-" Run all tests, disabling anything set by Sharpshooter().
+" Run all tests, disabling anything set by snakecharmer#pytest#Sharpshooter().
 function! snakecharmer#pytest#Scattershooter() " {{{
   call clearmatches()
   let dir = getcwd() . '/.git/sharpshooter'
@@ -139,7 +139,7 @@ function! snakecharmer#pytest#Scattershooter() " {{{
       call delete(fn)
     endif
   endfor
-  call PytestRun()
+  call snakecharmer#pytest#PytestRun()
 endfunction " }}}
 
 " Navigate to a test, creating a stub test class if it does not exist.
@@ -152,7 +152,7 @@ function! snakecharmer#pytest#Sniper() " {{{
   endif
 
   " module/(file).py
-  let pos = SnakeskinParse(fn).position()
+  let pos = snakecharmer#pytest#SnakeskinParse(fn).position()
 
   if len(pos) == 2
     " Class and method

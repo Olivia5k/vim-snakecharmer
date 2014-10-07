@@ -2,7 +2,7 @@
 
 " Note: These are all to be used with util/t found in this same dotfiles repo
 
-function! PytestSwitch(...)
+function! snakecharmer#pytest#PytestSwitch(...)
   let print = a:0 > 2 ? a:3 : 1
   let runit = a:0 > 3 ? a:4 : 1
   let dir = getcwd() . '/.git/sharpshooter'
@@ -56,13 +56,13 @@ function! PytestSwitch(...)
   endif
 endfunction
 
-function! PytestRun()
+function! snakecharmer#pytest#PytestRun()
   let fn = getcwd() . '/.git/sharpshooter.fifo'
   call writefile(['bang bang'], fn)
   doau BufWritePost
 endfunction
 
-function! PytestCurrent()
+function! snakecharmer#pytest#PytestCurrent()
   let dir = getcwd() . '/.git/sharpshooter'
   if !isdirectory(dir)
     return ''
@@ -72,7 +72,7 @@ function! PytestCurrent()
 endfunction
 
 let g:pytest_cache = []
-function! PytestComplete(a,l,p)
+function! snakecharmer#pytest#PytestComplete(a,l,p)
   let pt = getcwd() . '/bin/py.test'
   if !filereadable(pt)
     return []
@@ -103,7 +103,7 @@ endif
 " Sharpshooter {{{
 
 " Run one test and one test only
-function! Sharpshooter() " {{{
+function! snakecharmer#pytest#Sharpshooter() " {{{
   " TODO: Execution from outside of test files
   " TODO: Running all tests
 
@@ -131,7 +131,7 @@ function! Sharpshooter() " {{{
 endfunction " }}}
 
 " Run all tests, disabling anything set by Sharpshooter().
-function! Scattershooter() " {{{
+function! snakecharmer#pytest#Scattershooter() " {{{
   call clearmatches()
   let dir = getcwd() . '/.git/sharpshooter'
   for fn in [dir.'/k', dir.'/file']
@@ -143,7 +143,7 @@ function! Scattershooter() " {{{
 endfunction " }}}
 
 " Navigate to a test, creating a stub test class if it does not exist.
-function! Sniper() " {{{
+function! snakecharmer#pytest#Sniper() " {{{
   " TODO: Fix case of util functions outside of classes
   " TODO: Fix case when not under method
   let fn = expand('%')
@@ -224,7 +224,7 @@ function! Sniper() " {{{
   normal zA
 endfunction " }}}
 
-function! Medic(shift) " {{{
+function! snakecharmer#pytest#Medic(shift) " {{{
   echohl Statement
   echon 'Medic'
   echohl None

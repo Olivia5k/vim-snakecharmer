@@ -56,19 +56,19 @@ function! snakecharmer#pytest#Run() " {{{
   let fn = getcwd() . '/.git/snakecharmer.fifo'
   call writefile(['bang bang'], fn)
   doau BufWritePost
-endfunction
+endfunction " }}}
 
-function! snakecharmer#pytest#PytestCurrent()
+function! snakecharmer#pytest#PytestCurrent() " {{{
   let dir = s:dir()
   if !isdirectory(dir)
     return ''
   endif
   let list = split(globpath(dir, '**/*'), '\n')
   return join(map(list, 'fnamemodify(v:val, ":t")'), ", ")
-endfunction
+endfunction " }}}
 
 let g:pytest_cache = []
-function! snakecharmer#pytest#PytestComplete(a,l,p)
+function! snakecharmer#pytest#PytestComplete(a,l,p) " {{{
   let pt = getcwd() . '/bin/py.test'
   if !filereadable(pt)
     return []

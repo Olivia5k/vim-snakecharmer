@@ -213,9 +213,10 @@ function! snakecharmer#pytest#Sniper() " {{{
   normal zA
 endfunction " }}}
 
-function! snakecharmer#pytest#Medic(shift) " {{{
+function! snakecharmer#pytest#Browse(shift) " {{{
+  " Browse back and forth between failed tests
   echohl Statement
-  echon 'Medic'
+  echon 'SnakeTest'
   echohl None
   echon ': '
 

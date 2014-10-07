@@ -1,8 +1,4 @@
-" py.test switches {{{
-
-" Note: These are all to be used with util/t found in this same dotfiles repo
-
-function! snakecharmer#pytest#PytestSwitch(...)
+function! snakecharmer#pytest#Switch(...) " {{{
   let print = a:0 > 2 ? a:3 : 1
   let runit = a:0 > 3 ? a:4 : 1
   let dir = getcwd() . '/.git/sharpshooter'
@@ -52,11 +48,11 @@ function! snakecharmer#pytest#PytestSwitch(...)
 
   " Retrigger the tests
   if runit == 1
-    call snakecharmer#pytest#PytestRun()
+    call snakecharmer#pytest#Run()
   endif
-endfunction
+endfunction " }}}
 
-function! snakecharmer#pytest#PytestRun()
+function! snakecharmer#pytest#Run() " {{{
   let fn = getcwd() . '/.git/sharpshooter.fifo'
   call writefile(['bang bang'], fn)
   doau BufWritePost
@@ -90,20 +86,10 @@ function! snakecharmer#pytest#PytestComplete(a,l,p)
   endif
 
   return filter(copy(args), 'v:val =~ "^'.a:a.'"')
-endfunction
+endfunction " }}}
 
-command! -nargs=* -complete=customlist,PytestComplete PytestSwitch :call snakecharmer#pytest#PytestSwitch(<f-args>)
-command! -nargs=* -complete=customlist,PytestComplete PS :call snakecharmer#pytest#PytestSwitch(<f-args>)
-
-if exists('*airline#extensions#pytest#get_current')
-  let g:airline_section_y = '%= %{airline#util#wrap(airline#extensions#pytest#get_current(),0)}'
-endif
-
-" }}}
-" Sharpshooter {{{
-
-" Run one test and one test only
 function! snakecharmer#pytest#Sharpshooter() " {{{
+  " Run one test and one test only
   " TODO: Execution from outside of test files
   " TODO: Running all tests
 
@@ -117,8 +103,8 @@ function! snakecharmer#pytest#Sharpshooter() " {{{
     " Check if the current function follows the default py.test pattern.
     if pos != [] && pos[0] =~ '^Test' && pos[1] =~ '^test_'
       " If it does, store it as the only test to execute...
-      call snakecharmer#pytest#PytestSwitch('k', join(pos, ' and '), 0, 0)
-      call snakecharmer#pytest#PytestSwitch('file', fn, 0, 1)
+      call snakecharmer#pytest#Switch('k', join(pos, ' and '), 0, 0)
+      call snakecharmer#pytest#Switch('file', fn, 0, 1)
 
       " ...and highlight the name in the buffer.
       call snakecharmer#pytest#HiInterestingWord(1, pos[1])
@@ -127,23 +113,26 @@ function! snakecharmer#pytest#Sharpshooter() " {{{
   endif
 
   " If we're not setting a new test, just execute the last set one
-  call snakecharmer#pytest#PytestRun()
+  call snakecharmer#pytest#Run()
 endfunction " }}}
 
-" Run all tests, disabling anything set by snakecharmer#pytest#Sharpshooter().
-function! snakecharmer#pytest#Scattershooter() " {{{
-  call clearmatches()
-  let dir = getcwd() . '/.git/sharpshooter'
-  for fn in [dir.'/k', dir.'/file']
-    if filereadable(fn)
-      call delete(fn)
-    endif
-  endfor
-  call snakecharmer#pytest#PytestRun()
+function! snakecharmer#pytest#Unit() " {{{
+  " Run all tests, disabling anything set by snakecharmer#pytest#Sharpshooter().
+  call s:reset_flags({'k': ['not Integration']})
 endfunction " }}}
 
-" Navigate to a test, creating a stub test class if it does not exist.
+function! snakecharmer#pytest#Integration() " {{{
+  " Run integration tests
+  call s:reset_flags({'k': ['Integration']})
+endfunction " }}}
+
+function! snakecharmer#pytest#All() " {{{
+  " Run everything!
+  call s:reset_flags({})
+endfunction " }}}
+
 function! snakecharmer#pytest#Sniper() " {{{
+  " Navigate to a test, creating a stub test class if it does not exist.
   " TODO: Fix case of util functions outside of classes
   " TODO: Fix case when not under method
   let fn = expand('%')
@@ -275,7 +264,7 @@ function! snakecharmer#pytest#Medic(shift) " {{{
   echohl None
 endfunction " }}}
 
-function! s:camelize(s)
+function! s:camelize(s) " {{{
   if a:s =~ '_'
     " Move from snake_case to CamelCase.
     " http://vim.wikia.com/wiki/Converting_variables_to_or_from_camel_case
@@ -285,6 +274,28 @@ function! s:camelize(s)
     let pat = '^\(.\)\(.*\)'
   endif
   return substitute(a:s, pat , '\u\1\2', 'g')
-endfunction
+endfunction " }}}
 
-" }}}
+function! s:dir() " {{{
+  return getcwd() . '/.git/sharpshooter'
+endfunction " }}}
+
+function! s:reset_flags(flags) " {{{
+  call clearmatches()
+  let dir = s:dir()
+
+  " Kill all the old flags
+  for fn in split(globpath(dir, '*'), '\n')
+    if filereadable(fn)
+      call delete(fn)
+    endif
+  endfor
+
+  " Set the new flags
+  for [fn, lines] in items(a:flags)
+    echo fn lines
+    call writefile(lines, dir . '/' . fn, "b")
+  endfor
+
+  call snakecharmer#pytest#Run()
+endfunction " }}}

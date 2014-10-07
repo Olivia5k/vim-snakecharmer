@@ -1,6 +1,6 @@
 command! -buffer -nargs=0 SnakeArgs            :call SnakeArgs()
 command! -buffer -nargs=0 SnakeMockArgs        :call SnakeMockArgs()
-command! -buffer -nargs=0 SnakeTest            :call snakecharmer#pytest#Sharpshooter()
+command! -buffer -nargs=0 SnakeTest            :call snakecharmer#pytest#Single()
 command! -buffer -nargs=0 SnakeTestCreate      :call snakecharmer#pytest#Sniper()
 command! -buffer -nargs=0 SnakeTestNext        :call snakecharmer#pytest#Browse(1)
 command! -buffer -nargs=0 SnakeTestPrev        :call snakecharmer#pytest#Browse(-1)

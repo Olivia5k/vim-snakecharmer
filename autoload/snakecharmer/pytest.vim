@@ -1,7 +1,7 @@
 function! snakecharmer#pytest#Switch(...) " {{{
   let print = a:0 > 2 ? a:3 : 1
   let runit = a:0 > 3 ? a:4 : 1
-  let dir = getcwd() . '/.git/sharpshooter'
+  let dir = s:dir()
   let target = a:0 ? a:1 : ""
   let file = dir . '/' . target
 
@@ -53,13 +53,13 @@ function! snakecharmer#pytest#Switch(...) " {{{
 endfunction " }}}
 
 function! snakecharmer#pytest#Run() " {{{
-  let fn = getcwd() . '/.git/sharpshooter.fifo'
+  let fn = getcwd() . '/.git/snakecharmer.fifo'
   call writefile(['bang bang'], fn)
   doau BufWritePost
 endfunction
 
 function! snakecharmer#pytest#PytestCurrent()
-  let dir = getcwd() . '/.git/sharpshooter'
+  let dir = s:dir()
   if !isdirectory(dir)
     return ''
   endif
@@ -88,10 +88,9 @@ function! snakecharmer#pytest#PytestComplete(a,l,p)
   return filter(copy(args), 'v:val =~ "^'.a:a.'"')
 endfunction " }}}
 
-function! snakecharmer#pytest#Sharpshooter() " {{{
+function! snakecharmer#pytest#Single() " {{{
   " Run one test and one test only
   " TODO: Execution from outside of test files
-  " TODO: Running all tests
 
   " Save the file so that we are sure it is up to date.
   silent update
@@ -117,7 +116,7 @@ function! snakecharmer#pytest#Sharpshooter() " {{{
 endfunction " }}}
 
 function! snakecharmer#pytest#Unit() " {{{
-  " Run all tests, disabling anything set by snakecharmer#pytest#Sharpshooter().
+  " Run all tests, disabling anything set by snakecharmer#pytest#Single().
   call s:reset_flags({'k': ['not Integration']})
 endfunction " }}}
 
@@ -220,11 +219,11 @@ function! snakecharmer#pytest#Browse(shift) " {{{
   echohl None
   echon ': '
 
-  let file = '.git/sharpshooter.log'
+  let file = '.git/snakecharmer.log'
 
   if !filereadable(file)
     echohl Identifier
-    echon 'No sharpshooter log file.'
+    echon 'No snakecharmer log file.'
     echohl None
     return
   endif
@@ -278,7 +277,7 @@ function! s:camelize(s) " {{{
 endfunction " }}}
 
 function! s:dir() " {{{
-  return getcwd() . '/.git/sharpshooter'
+  return getcwd() . '/.git/snakecharmer'
 endfunction " }}}
 
 function! s:reset_flags(flags) " {{{

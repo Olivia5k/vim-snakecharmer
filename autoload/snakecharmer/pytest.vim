@@ -49,7 +49,10 @@ function! snakecharmer#pytest#Switch(...) " {{{
 endfunction " }}}
 
 function! snakecharmer#pytest#Run() " {{{
+  " call snakecharmer#pytest#Start()
+
   call writefile(['run'], s:dir('fifo'))
+
   doau BufWritePost
 endfunction " }}}
 
@@ -214,7 +217,7 @@ function! snakecharmer#pytest#Browse(shift) " {{{
   echohl None
   echon ': '
 
-  let file = '.git/snakecharmer.log'
+  let file = s:dir('log')
 
   if !filereadable(file)
     echohl Identifier
@@ -257,6 +260,21 @@ function! snakecharmer#pytest#Browse(shift) " {{{
   echohl Function
   echon spl[0] . '.' . spl[1]
   echohl None
+endfunction " }}}
+
+function! snakecharmer#pytest#Start() " {{{
+  if s:tmux('display -p "#{window_panes}"') > 1
+    return
+  endif
+
+  let dir = getcwd()
+  let script = globpath(&rtp, 'script/snakecharmer')
+  silent! exec '!tmux split-window -h -d -p 33 -c' dir script '& &> /dev/null'
+endfunction " }}}
+
+function! s:tmux(...) " {{{
+  let cmd = 'tmux ' . join(a:000, '')
+  return system(cmd)
 endfunction " }}}
 
 function! s:camelize(s) " {{{

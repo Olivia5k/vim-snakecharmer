@@ -22,7 +22,7 @@ map <buffer><silent> <Plug>SnakeTestIntegration  :SnakeTestIntegration<cr>
 map <buffer><silent> <Plug>SnakeTestAll          :SnakeTestAll<cr>
 
 if !exists('g:snakecharmer_disable_maps')
-  nmap <buffer> <cr>       <Plug>SnakeTest
+  " nmap <buffer> <cr>       <Plug>SnakeTest
   nmap <buffer> <c-s><c-s> <Plug>SnakeTest
 
   nmap <buffer> <c-s>a <Plug>SnakeArgs

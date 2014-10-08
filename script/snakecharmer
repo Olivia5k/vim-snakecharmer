@@ -4,7 +4,7 @@ setopt nullglob
 
 root="$PWD/.git/snakecharmer"
 dir="$root/switches/"
-log="$root/snaketest.log"
+log="$root/log"
 fifo="$root/fifo"
 
 function run() {
@@ -45,7 +45,7 @@ function run() {
   # If there is coverage and we can guess the source code dir, add coverage
   if [[ ! -f $dir/cov ]] && (( $+commands[coverage] )) && [[ -d $PWD/$PWD:t ]]; then
     # If we are not running all the tests, disable coverage
-    if [[ ! $opts =~ '-x' ]] && [[ ! $opts =~ '-k' ]]; then
+    if [[ ! $opts =~ '-x' ]] && [[ $target == 'test/' ]]; then
       opts+=" --cov=$PWD:t --cov-report=term-missing"
     fi
   fi
@@ -54,13 +54,8 @@ function run() {
     echo py.test $target ${(z)opts}
   fi
 
-  py.test $target ${(Q)${(z)opts}}
+  bin/py.test $target ${(Q)${(z)opts}}
 }
-
-if (( ! $+commands[py.test] )) ; then
-  print -P "%F{red}%BError%b%f: py.test not found. Did you virtualenv?"
-  exit 1
-fi
 
 if [[ ! -p $fifo ]]; then
   mkfifo $fifo

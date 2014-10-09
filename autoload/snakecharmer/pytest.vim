@@ -95,16 +95,17 @@ function! snakecharmer#pytest#Single() " {{{
 
   let fn = expand('%')
   if fn =~ 'test/.*'
-    let pos = snakecharmer#pytest#SnakeskinParse(fn).position()
+    let pos = snakecharmer#snakeskin#SnakeskinParse(fn).position()
 
     " Check if the current function follows the default py.test pattern.
     if pos != [] && pos[0] =~ '^Test' && pos[1] =~ '^test_'
+      " ...and highlight the name in the buffer.
+      " call snakecharmer#pytest#HiInterestingWord(1, pos[1])
+      call HiInterestingWord(1, pos[1])
+
       " If it does, store it as the only test to execute...
       call snakecharmer#pytest#Switch('k', join(pos, ' and '), 0, 0)
       call snakecharmer#pytest#Switch('file', fn, 0, 1)
-
-      " ...and highlight the name in the buffer.
-      call snakecharmer#pytest#HiInterestingWord(1, pos[1])
       return
     endif
   endif

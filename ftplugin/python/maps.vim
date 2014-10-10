@@ -1,3 +1,14 @@
+" ftplugin/python/maps.vim
+" Author:       Lowe Thiderman <lowe.thiderman@gmail.com>
+
+if exists('g:loaded_snakecharmer_maps') || &cp || v:version < 700
+  finish
+endif
+let g:loaded_snakecharmer_maps = 1
+
+let s:cpo_save = &cpo
+set cpo&vim
+
 command! -buffer -nargs=0 SnakeArgs            :call SnakeArgs()
 command! -buffer -nargs=0 SnakeMockArgs        :call SnakeMockArgs()
 command! -buffer -nargs=0 SnakeTest            :call snakecharmer#pytest#Single()
@@ -8,8 +19,8 @@ command! -buffer -nargs=0 SnakeTestUnit        :call snakecharmer#pytest#Unit()
 command! -buffer -nargs=0 SnakeTestIntegration :call snakecharmer#pytest#Integration()
 command! -buffer -nargs=0 SnakeTestAll         :call snakecharmer#pytest#All()
 
-command! -buffer -nargs=* -complete=customlist,PytestComplete Switch :call snakecharmer#pytest#Switch(<f-args>)
-command! -buffer -nargs=* -complete=customlist,PytestComplete PS :call snakecharmer#pytest#Switch(<f-args>)
+command! -buffer -nargs=* -complete=customlist,snakecharmer#pytest#PytestComplete
+      \ SnakeTestSwitch :call snakecharmer#pytest#Switch(<f-args>)
 
 map <buffer><silent> <Plug>SnakeArgs             :SnakeArgs<cr>
 map <buffer><silent> <Plug>SnakeMockArgs         :SnakeMockArgs<cr>
@@ -22,8 +33,9 @@ map <buffer><silent> <Plug>SnakeTestIntegration  :SnakeTestIntegration<cr>
 map <buffer><silent> <Plug>SnakeTestAll          :SnakeTestAll<cr>
 
 if !exists('g:snakecharmer_disable_maps')
-  " nmap <buffer> <cr>       <Plug>SnakeTest
-  nmap <buffer> <c-s><c-s> <Plug>SnakeTest
+  nnoremap <buffer> <cr> :call snakecharmer#pytest#Single()<cr>
+
+  nmap <buffer> <c-s>d <Plug>SnakeTest
 
   nmap <buffer> <c-s>a <Plug>SnakeArgs
   nmap <buffer> <c-s>m <Plug>SnakeMockArgs
@@ -34,3 +46,6 @@ if !exists('g:snakecharmer_disable_maps')
   nmap <buffer> <c-s>i <Plug>SnakeTestIntegration
   nmap <buffer> <c-s>t <Plug>SnakeTestAll
 endif
+
+let &cpo = s:cpo_save
+" vim:set sw=2 sts=2:

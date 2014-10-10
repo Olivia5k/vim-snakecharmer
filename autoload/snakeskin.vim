@@ -1,7 +1,7 @@
-" plugin/snakeskin.vim
+" autoload/snakeskin.vim
 " Author:       Lowe Thiderman <lowe.thiderman@gmail.com>
 
-if exists('g:loaded_snakeskin') || &cp
+if exists('g:loaded_snakeskin') || &cp || v:version < 700
   finish
 endif
 let g:loaded_snakeskin = 1
@@ -13,7 +13,7 @@ if !exists('g:snakeskin')
   let g:snakeskin = {}
 endif
 
-" Public API {{{1
+" Public API {{{
 
 function! SnakeskinParse(fn, ...)
   let fn = fnamemodify(a:fn, ':p')
@@ -42,7 +42,7 @@ function! SnakeskinParse(fn, ...)
   return d
 endfunction
 " }}}
-" Statusline {{{1
+" Statusline {{{
 
 function! SnakeskinPosition() dict abort
   let lnr = getpos('.')[1]
@@ -94,7 +94,7 @@ function! SnakeskinClosestParent(lnr) dict abort
 endfunction
 
 " }}}
-" Core helpers {{{1
+" Core helpers {{{
 
 function! s:get_indent() dict abort
   " if has_key(self, '_indent')
@@ -165,7 +165,7 @@ endfunction
 
 
 " }}}
-" Completion {{{1
+" Completion {{{
 
 function! SnakeskinComplete(A,P,L) abort
   let spl = split(a:P)
@@ -236,7 +236,7 @@ function! SnakeskinPythonCompletion(fn, words, A, P, L) abort
 endfunction
 
 " }}}
-" Data traversing {{{1
+" Data traversing {{{
 
 function! SnakeskinGetLevel(level) dict abort
   return filter(deepcopy(self.data), 'v:val[1] == ' . a:level)
@@ -290,7 +290,7 @@ endfunction
 
 
 " }}}
-" Commands {{{1
+" Commands {{{
 
 function! SnakeskinEdit(cmd, fn, ...) abort
   exe a:cmd a:fn

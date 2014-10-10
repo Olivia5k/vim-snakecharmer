@@ -1,14 +1,6 @@
 " ftplugin/python/maps.vim
 " Author:       Lowe Thiderman <lowe.thiderman@gmail.com>
 
-if exists('g:loaded_snakecharmer_maps') || &cp || v:version < 700
-  finish
-endif
-let g:loaded_snakecharmer_maps = 1
-
-let s:cpo_save = &cpo
-set cpo&vim
-
 command! -buffer -nargs=0 SnakeArgs            :call SnakeArgs()
 command! -buffer -nargs=0 SnakeMockArgs        :call SnakeMockArgs()
 command! -buffer -nargs=0 SnakeTest            :call snakecharmer#pytest#Single()
@@ -47,5 +39,4 @@ if !exists('g:snakecharmer_disable_maps')
   nmap <buffer> <c-s>t <Plug>SnakeTestAll
 endif
 
-let &cpo = s:cpo_save
 " vim:set sw=2 sts=2:

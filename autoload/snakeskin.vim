@@ -15,7 +15,7 @@ endif
 
 " Public API {{{
 
-function! SnakeskinParse(fn, ...)
+function! snakeskin#SnakeskinParse(fn, ...)
   let fn = fnamemodify(a:fn, ':p')
   if !filereadable(fn)
     " echo "Error: File not found."

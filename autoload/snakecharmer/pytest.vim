@@ -1,3 +1,5 @@
+let g:snakecharmer_pytest_args_cache = []
+
 function! snakecharmer#pytest#Switch(...) " {{{
   let print = a:0 > 2 ? a:3 : 1
   let runit = a:0 > 3 ? a:4 : 1
@@ -65,22 +67,21 @@ function! snakecharmer#pytest#PytestCurrent() " {{{
   return join(map(list, 'fnamemodify(v:val, ":t")'), ", ")
 endfunction " }}}
 
-let g:pytest_cache = []
 function! snakecharmer#pytest#PytestComplete(a,l,p) " {{{
   let pt = getcwd() . '/bin/py.test'
   if !filereadable(pt)
     return []
   endif
 
-  if g:pytest_cache != []
-    let args = g:pytest_cache
+  if g:snakecharmer_pytest_args_cache != []
+    let args = g:snakecharmer_pytest_args_cache
   else
     let help = split(system(pt .' --help'), '\n')
     let help = filter(help, 'v:val =~ "^  -"')
     " TODO: Args with multiple forms
     let help = map(help, 'substitute(v:val, "^  --\\?\\([-a-z]*\\).*", "\\1", "")')
     let args = sort(help)
-    let g:pytest_cache = args
+    let g:snakecharmer_pytest_args_cache = args
   endif
 
   return filter(copy(args), 'v:val =~ "^'.a:a.'"')
@@ -95,7 +96,7 @@ function! snakecharmer#pytest#Single() " {{{
 
   let fn = expand('%')
   if fn =~ 'test/.*'
-    let pos = snakecharmer#snakeskin#SnakeskinParse(fn).position()
+    let pos = snakeskin#SnakeskinParse(fn).position()
 
     " Check if the current function follows the default py.test pattern.
     if pos != [] && pos[0] =~ '^Test' && pos[1] =~ '^test_'
@@ -139,7 +140,7 @@ function! snakecharmer#pytest#Sniper() " {{{
   endif
 
   " module/(file).py
-  let pos = snakecharmer#pytest#SnakeskinParse(fn).position()
+  let pos = snakeskin#SnakeskinParse(fn).position()
 
   if len(pos) == 2
     " Class and method
@@ -206,18 +207,12 @@ function! snakecharmer#pytest#Sniper() " {{{
     call setpos('.', pos)
   endif
 
-  normal zt
-  normal zM
-  normal zA
+  normal! zt
+  normal! zM
+  normal! zA
 endfunction " }}}
 
 function! snakecharmer#pytest#Browse(shift) " {{{
-  " Browse back and forth between failed tests
-  echohl Statement
-  echon 'SnakeTest'
-  echohl None
-  echon ': '
-
   let file = s:dir('log')
 
   if !filereadable(file)
@@ -228,39 +223,177 @@ function! snakecharmer#pytest#Browse(shift) " {{{
   endif
 
   let index = 0
-  let lines = filter(readfile(file), 'v:val =~ "^[^. ]"')
+  let errors = snakecharmer#pytest#ParseErrors()
 
-  if len(lines) == 0
+  if !errors.has_errors()
     echohl Identifier
     echon 'No errors'
     echohl None
     return
   endif
 
-  let shift = lines[-1]
-  if shift =~ '\d'
-    let lines = lines[0:-2]
-    let shift += a:shift
-    let index = shift % len(lines)
+  call errors.shift(a:shift)
+endfunction " }}}
+
+function! snakecharmer#pytest#ParseErrors() " {{{
+  if exists('g:snakecharmer_pytest_error')
+    " Yay cache!
+    let d = g:snakecharmer_pytest_error
+  else
+    " No cache! Create new!
+    let d = {}
+    let d.fn = s:dir('log')
+    let d.fn = '/home/thiderman/git/piper/.git/snakecharmer/log'
+    let d.has_errors = function('s:tb_has_errors')
+    let d.parse = function('s:tb_parse')
+    let d.parse_errorfile = function('s:parse_errorfile')
+    let d.shift = function('s:tb_shift')
   endif
 
-  let line = lines[index]
-  let spl = split(line, '::')
-  silent exe 'edit' split(spl[0], ' ')[1]
-  call search(spl[3] . '(')
-  call writefile(lines + [index], file)
+  return d.parse()
+endfunction " }}}
 
-  normal zMzAzz
+function! s:tb_shift(shift) dict abort " {{{
+  if has_key(self, 'index') == 1
+    " Make sure that the index loops over the list (+1 at the end should go to
+    " start)
+    let self.index = (self.index + a:shift) % len(self.errors)
+  else
+    let self.index = 0
+  endif
 
+  let error = self.errors[self.index]
+  call error.edit()
+
+  echohl Statement
+  echon 'SnakeTest'
+  echohl None
+  echon ': '
   echohl Number
-  echon index(lines, line) + 1
+  echon self.index + 1
   echon '/'
-  echon len(lines)
+  echon len(self.errors)
   echohl None
   echon ' - '
   echohl Function
-  echon spl[0] . '.' . spl[1]
+  " TODO: Fix too wise messages
+  echon substitute(error.lines[-1], '\s*$', '', '')
   echohl None
+endfunction " }}}
+
+function! s:tb_parse() dict abort " {{{
+  if getftime(self.fn) != get(self, 'ftime', -1)
+    " Either there is no cache yet or the file has changed. Do parse.
+    let self.ftime = getftime(self.fn)
+    let self.errors = self.parse_errorfile()
+    let g:snakecharmer_pytest_error = self
+  endif
+
+  return self
+endfunction " }}}
+
+function! s:tb_has_errors() dict abort " {{{
+  return len(self.errors)
+endfunction " }}}
+
+function! s:parse_errorfile() dict abort " {{{
+  let blocks = []
+
+  for line in readfile(self.fn)
+    if line =~ '^\.'
+      " Passing test. Ignore pls.
+      continue
+    endif
+
+    if line =~ '^\w'
+      " If the line begins with a word character, it's the beginning of a new block
+      if exists('block')
+        " Add the last block to the list of blocks
+        let blocks = add(blocks, block)
+      endif
+      let block = [line]
+    else
+      let block = add(block, line)
+    endif
+  endfor
+
+  " Add the last block as well
+  let blocks = add(blocks, block)
+
+  return s:generate_error_objects(blocks)
+endfunction " }}}
+
+function! s:generate_error_objects(blocks) " {{{
+  let data = []
+
+  for block in a:blocks
+    let err = {}
+    let err.lines = block
+    let err.tb_lines = filter(err.lines[1:], 'v:val !~ "^ \\w   "')
+
+    let spl = split(err.lines[0][2:], '::')
+    let err.code = err.lines[0][0]
+    let err.filename = spl[0]
+    let err.cls = spl[1]
+    let err.method = spl[3]
+    " TODO: These can be multiline for AssertionErrors
+    " let err.msg = err.lines[-1][5:]
+
+    let err.as_qf = function('s:error_as_qf')
+    let err.edit = function('s:error_edit')
+
+    let data = add(data, err)
+  endfor
+
+  return data
+endfunction " }}}
+
+function! s:error_as_qf() dict abort " {{{
+  let qf = []
+
+  for x in range(len(self.tb_lines))
+    if x % 2 == 1
+      " Odd lines are handled on the even lines since they come in pairs
+      continue
+    endif
+
+    let meta = split(self.tb_lines[x][1:], ':')
+    let line = self.tb_lines[x+1][5:]
+
+    let qfline = {}
+    let qfline.filename = meta[0]
+    let qfline.lnum = meta[1]
+    let qfline.text = line
+
+    if qfline.filename =~ '/site-packages/mock.py$'
+      " We know, there was a mock patch...
+      continue
+    endif
+
+    let qf = add(qf, qfline)
+  endfor
+
+  return qf
+endfunction " }}}
+
+function! s:error_edit() dict abort " {{{
+  let qf = self.as_qf()
+  silent only
+  silent! exec 'edit' self.filename
+  call setpos('.', [0, qf[0].lnum, 0, 0])
+
+  " First of the line
+  silent normal! ^
+  " Focus just this fold
+  silent normal! zMzAzz
+
+  " Fill the quickfix list with the traceback and open it passively. Open it
+  " with the default size unless it's larger.
+  call setqflist(qf)
+  silent exec 'copen' len(qf) < 10 ? 10 : len(qf)
+  wincmd w
+
+  let w:quickfix_title = self.lines[-1]
 endfunction " }}}
 
 function! snakecharmer#pytest#Start() " {{{

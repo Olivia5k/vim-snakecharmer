@@ -298,6 +298,7 @@ endfunction " }}}
 
 function! s:parse_errorfile() dict abort " {{{
   let blocks = []
+  let block = []
 
   for line in readfile(self.fn)
     if line =~ '^\.'
@@ -305,10 +306,10 @@ function! s:parse_errorfile() dict abort " {{{
       continue
     endif
 
+    " If the line begins with a word character, it's the beginning of a new block
     if line =~ '^\w'
-      " If the line begins with a word character, it's the beginning of a new block
-      if exists('block')
-        " Add the last block to the list of blocks
+      if block != []
+        " Add the previous block to the list of vlocks
         let blocks = add(blocks, block)
       endif
       let block = [line]
@@ -317,9 +318,13 @@ function! s:parse_errorfile() dict abort " {{{
     endif
   endfor
 
+  if block == []
+    " Nothing happened - there are no errors
+    return []
+  endif
+
   " Add the last block as well
   let blocks = add(blocks, block)
-
   return s:generate_error_objects(blocks)
 endfunction " }}}
 

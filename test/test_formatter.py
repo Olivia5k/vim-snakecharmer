@@ -1,18 +1,12 @@
 from pythonx.formatter import Formatter
 
 
-class TestOneLiner(object):
+class TestOneLinerCalls(object):
     def test_below_width(self):
-        form = Formatter(['x = 1'], width=20)
+        form = Formatter(['x = a(1)'], width=20)
         ret = form.format()
 
-        assert ret == ['x = 1']
-
-    def test_long_without_opener(self):
-        form = Formatter(['x = 12345'], width=7)
-        ret = form.format()
-
-        assert ret == ['x = 12345']
+        assert ret == ['x = a(1)']
 
     def test_long_with_one_opener(self):
         form = Formatter(['x = hax(11111)'], width=10)
@@ -44,4 +38,46 @@ class TestOneLiner(object):
             '        11111,',
             '        22222,',
             '    )',
+        ]
+
+
+class TestArgsAndKwargs(object):
+    def test_star_args(self):
+        form = Formatter(['x = hax(*args)'], width=5)
+        ret = form.format()
+
+        assert ret == [
+            'x = hax(',
+            '    *args,',
+            ')',
+        ]
+
+    def test_star_kwargs(self):
+        form = Formatter(['x = hax(**kwargs)'], width=5)
+        ret = form.format()
+
+        assert ret == [
+            'x = hax(',
+            '    **kwargs,',
+            ')',
+        ]
+
+    def test_kwargs(self):
+        form = Formatter(['x = hax(keyword=11)'], width=5)
+        ret = form.format()
+
+        assert ret == [
+            'x = hax(',
+            '    keyword=11,',
+            ')',
+        ]
+
+    def test_args(self):
+        form = Formatter(['x = hax(11)'], width=5)
+        ret = form.format()
+
+        assert ret == [
+            'x = hax(',
+            '    11,',
+            ')',
         ]

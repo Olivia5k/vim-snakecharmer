@@ -51,7 +51,7 @@ class Formatter(object):
         if node.args:
             args += [self.parse(a) for a in node.args]
         if node.keywords:
-            args += [self.handle_keyword(a) for a in node.kwargs]
+            args += [self.handle_keyword(a) for a in node.keywords]
 
         if node.starargs:
             args.append('*{0}'.format(node.starargs.id))
@@ -83,4 +83,4 @@ class Formatter(object):
         elif isinstance(node, _ast.Num):
             return self.handle_num(node)
 
-        raise Exception('Unhandled node {0}'.format(node))
+        raise Exception('Unhandled node {0}'.format(node))  # pragma: nocover

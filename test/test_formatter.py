@@ -36,7 +36,6 @@ class TestOneLiner(object):
         ]
 
     def test_indented_long_with_one_opener_multiple_arguments(self):
-        return
         form = Formatter(['    x = hax(11111, 22222)'], width=10)
         ret = form.format()
 

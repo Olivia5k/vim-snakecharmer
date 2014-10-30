@@ -1,3 +1,4 @@
+import re
 import ast
 import _ast
 
@@ -6,18 +7,31 @@ class Formatter(object):
     def __init__(self, lines, width=79):
         self.lines = lines
         self.width = width
-        self.data = '\n'.join(lines)
 
-        self.indentation = ''
+        self.indent = 0
 
     def format(self):
         ret = []
-        root = ast.parse(self.data)
+        data = self.unindent(self.lines)
+        root = ast.parse('\n'.join(data))
 
         for node in root.body:
             ret += self.parse(node)
 
-        return ret
+        return self.reindent(ret)
+
+    def unindent(self, lines):
+        self.indent = re.search('\S', lines[0]).start()
+        if self.indent == 0:
+            return lines
+
+        lines = [s[self.indent:] for s in lines]
+        return lines
+
+    def reindent(self, lines):
+        if self.indent == 0:
+            return lines
+        return ['{0}{1}'.format(' ' * self.indent, s) for s in lines]
 
     def handle_assign(self, node):
         targets = ', '.join(t.id for t in node.targets)
@@ -49,7 +63,6 @@ class Formatter(object):
             # Line fits. Send it.
             return [line]
 
-        print(args)
         ret = ['{0}('.format(func)]
         ret += ['    {0},'.format(arg) for arg in args]
         ret.append(')')

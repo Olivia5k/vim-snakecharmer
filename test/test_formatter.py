@@ -20,7 +20,7 @@ class TestOneLiner(object):
 
         assert ret == [
             'x = hax(',
-            '    11111',
+            '    11111,',
             ')',
         ]
 
@@ -30,18 +30,19 @@ class TestOneLiner(object):
 
         assert ret == [
             'x = hax(',
-            '    11111',
-            '    22222',
+            '    11111,',
+            '    22222,',
             ')',
         ]
 
     def test_indented_long_with_one_opener_multiple_arguments(self):
+        return
         form = Formatter(['    x = hax(11111, 22222)'], width=10)
         ret = form.format()
 
         assert ret == [
             '    x = hax(',
-            '        11111',
-            '        22222',
+            '        11111,',
+            '        22222,',
             '    )',
         ]

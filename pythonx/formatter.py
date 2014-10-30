@@ -1,72 +1,73 @@
-import re
-
-
-OPENERS = '([{'
-OPENERS_RE = re.compile(r'([\[({])')
-CLOSERS = ')]}'
+import ast
+import _ast
 
 
 class Formatter(object):
     def __init__(self, lines, width=79):
         self.lines = lines
         self.width = width
+        self.data = '\n'.join(lines)
 
         self.indentation = ''
 
     def format(self):
-        if len(self.lines) == 1:
-            return self.oneline()
+        ret = []
+        root = ast.parse(self.data)
 
-    def oneline(self):
-        line = self.lines[0]
-        # Line under width. Do nothing.
-        if len(line) <= self.width:
+        for node in root.body:
+            ret += self.parse(node)
+
+        return ret
+
+    def handle_assign(self, node):
+        targets = ', '.join(t.id for t in node.targets)
+        value = self.parse(node.value)
+
+        if isinstance(value, list):
+            ret = ['{0} = {1}'.format(targets, value[0])]
+            ret += value[1:]
+            return ret
+
+        line = '{0} = {1}'.format(targets, value)
+        return [line]
+
+    def handle_call(self, node):
+        func = node.func.id
+        args = []
+        if node.args:
+            args += [self.parse(a) for a in node.args]
+        if node.keywords:
+            args += [self.handle_keyword(a) for a in node.kwargs]
+
+        if node.starargs:
+            args.append('*{0}'.format(node.starargs.id))
+        if node.kwargs:
+            args.append('**{0}'.format(node.kwargs.id))
+
+        line = '{0}({1})'.format(func, ', '.join(args))
+        if len(line) < self.width:
+            # Line fits. Send it.
             return [line]
 
-        # No opening things. Do nothing.
-        if not OPENERS_RE.search(line):
-            return [line]
+        print(args)
+        ret = ['{0}('.format(func)]
+        ret += ['    {0},'.format(arg) for arg in args]
+        ret.append(')')
 
-        # Line is too long and has openers. Apply magic.
-        return self.align_opening(self.lines)
+        return ret
 
-    def align_opening(self, lines):
-        pre = ''
-        inner = ''
-        post = ''
+    def handle_num(self, node):
+        return str(node.n)
 
-        saw_char = False
-        inside = False
-        exited = False
-        for line in lines:
-            for c in line:
-                if not inside and not exited:
-                    if c == ' ':
-                        if not saw_char:
-                            self.indentation += c
-                    else:
-                        saw_char = True
+    def handle_keyword(self, node):
+        return '{0}={1}'.format(node.arg, self.parse(node.value))
 
-                    pre += c
-                    if c in OPENERS:
-                        inside = True
-                elif inside and not exited:
-                    if c in CLOSERS:
-                        exited = True
-                        post += c
-                    else:
-                        inner += c
-                # else:
-                #     post += c
+    def parse(self, node):
+        if isinstance(node, _ast.Assign):
+            return self.handle_assign(node)
+        elif isinstance(node, _ast.Call):
+            return self.handle_call(node)
+        elif isinstance(node, _ast.Num):
+            return self.handle_num(node)
 
-        # Take the inner arguments, split them on comma and indent them
-        inner = map(str.strip, inner.split(','))
-        inner = map(self.indent, inner)
-
-        # Add the default indentation to the ender
-        post = self.indentation + post
-
-        return [pre] + list(inner) + [post]
-
-    def indent(self, s):
-        return self.indentation + '    ' + s
+        raise Exception('Unhandled node {0}'.format(node))

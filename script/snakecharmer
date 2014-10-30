@@ -43,10 +43,12 @@ function run() {
   fi
 
   # If there is coverage and we can guess the source code dir, add coverage
-  if [[ ! -f $dir/cov ]] && (( $+commands[coverage] )) && [[ -d $PWD/$PWD:t ]]; then
+  if [[ ! -f $dir/cov ]] && (( $+commands[coverage] )); then
     # If we are not running all the tests, disable coverage
     if [[ ! $opts =~ '-x' ]] && [[ $target == 'test/' ]]; then
-      opts+=" --cov=$PWD:t --cov-report=term-missing"
+      # TODO: Make purdier
+      f=$(ls */__init__.py | grep -v test/)
+      opts+=" --cov=$f:h --cov-report=term-missing"
     fi
   fi
 

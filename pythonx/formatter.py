@@ -1,6 +1,5 @@
 import re
 import ast
-import _ast
 
 
 class Formatter(object):
@@ -76,11 +75,9 @@ class Formatter(object):
         return '{0}={1}'.format(node.arg, self.parse(node.value))
 
     def parse(self, node):
-        if isinstance(node, _ast.Assign):
-            return self.handle_assign(node)
-        elif isinstance(node, _ast.Call):
-            return self.handle_call(node)
-        elif isinstance(node, _ast.Num):
-            return self.handle_num(node)
+        cls = node.__class__.__name__.lower()
+        func = getattr(self, 'handle_{0}'.format(cls), None)
+        if func:
+            return func(node)
 
         raise Exception('Unhandled node {0}'.format(node))  # pragma: nocover

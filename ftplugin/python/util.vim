@@ -1,14 +1,12 @@
 " Function that takes the argument from an __init__ constructor and makes sure
 " that there are assigments for all of them
-function! SnakeArgs() " {{{
-  let fn = expand('%')
-  let skin = SnakeskinParse(fn)
-
-  if skin.position()[-1] != '__init__'
+function! SnakeArgs() abort " {{{
+  if getline('.') !~ 'def __init__(self, \w.*)'
     return
   endif
 
-  let init_lnr = search('__init__', 'bn')
+  let pos = getpos('.')
+  let init_lnr = line('.')
   let indent = s:get_indent(init_lnr)
 
   let args = s:get_args(init_lnr)[1:]
@@ -38,13 +36,14 @@ function! SnakeArgs() " {{{
   if len(lnrs) < len(args)
     call append(end_lnr, args[len(lnrs):])
   endif
+  call setpos('.', pos)
 endfunction " }}}
 
 function! s:get_args(lnr) " {{{
   let line = getline(a:lnr)
   let str = matchlist(line, '.*(\(.*\)):')[1]
 
-  let args = split(str, ', ')
+  let args = split(str, ',\s\?')
   let args = map(args, "substitute(v:val, '\\(=.*\\)', '', '')")
 
   return args
@@ -70,17 +69,10 @@ endfunction " }}}
 " Function that looks at the above test to see if there are mocks, and if so
 " checks if the mock arguments have been properly provided
 function! SnakeMockArgs() " {{{
-  if getline('.') =~ '@mock.patch('
-    let test_lnr = search('def test_', 'n')
-  else
-    let fn = expand('%')
-    let skin = SnakeskinParse(fn)
-
-    if skin.position()[-1] !~ '^test_'
-      return
-    endif
-    let test_lnr = search('def test_', 'bn')
+  if getline('.') !~ '@mock.patch('
+    return
   endif
+  let test_lnr = search('def test_', 'n')
 
   let mocks = s:get_mocks(test_lnr - 1)
   let args = map(mocks, 's:clean_mock_arg(v:val)')

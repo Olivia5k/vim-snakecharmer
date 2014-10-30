@@ -1,14 +1,6 @@
 " autoload/snakeskin.vim
 " Author:       Lowe Thiderman <lowe.thiderman@gmail.com>
 
-if exists('g:loaded_snakeskin') || &cp || v:version < 700
-  finish
-endif
-let g:loaded_snakeskin = 1
-
-let s:cpo_save = &cpo
-set cpo&vim
-
 if !exists('g:snakeskin')
   let g:snakeskin = {}
 endif
@@ -317,5 +309,4 @@ endfunction
 
 " }}}
 
-let &cpo = s:cpo_save
 " vim:set sw=2 sts=2:

@@ -228,3 +228,25 @@ class TestList(object):
             '    5,',
             ']',
         ]
+
+
+class TestTuple(object):
+    def test_below_length(self):
+        form = Formatter(['(1,2,3,4,5)'], width=79)
+        ret = form.format()
+
+        assert ret == ['(1, 2, 3, 4, 5)']
+
+    def test_above_length(self):
+        form = Formatter(['(1,2,3,4,5)'], width=3)
+        ret = form.format()
+
+        assert ret == [
+            '(',
+            '    1,',
+            '    2,',
+            '    3,',
+            '    4,',
+            '    5,',
+            ')',
+        ]

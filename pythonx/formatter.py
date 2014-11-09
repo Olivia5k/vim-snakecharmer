@@ -180,28 +180,11 @@ class Formatter(object):
         return "{0}".format(node.id)
 
     def handle_list(self, node):
-        """
-        []
-
-        Handle a list.
-
-        """
-
         # TODO: .ctx?
-        if not node.elts:
-            return ['[]']
+        return self._handle_iterable('[]', node.elts)
 
-        items = [self.parse(x) for x in node.elts]
-        line = '[{0}]'.format(', '.join(items))
-        if len(line) < self.width:
-            # Line fits. Send it.
-            return [line]
-
-        ret = ['[']
-        ret += ['    {0},'.format(item) for item in items]
-        ret.append(']')
-
-        return ret
+    def handle_tuple(self, node):
+        return self._handle_iterable('()', node.elts)
 
     def handle_keyword(self, node):
         """
@@ -248,3 +231,24 @@ class Formatter(object):
             args.append('{0}{1}'.format(token, targets))
 
         return args
+
+    def _handle_iterable(self, tokens, items):
+        """
+        Handle a iterable, such as a list or a tuple.
+
+        """
+
+        if not items:
+            return [tokens]
+
+        items = [self.parse(x) for x in items]
+        line = '{1}{0}{2}'.format(', '.join(items), *tokens)
+        if len(line) < self.width:
+            # Line fits. Send it.
+            return [line]
+
+        ret = [tokens[0]]
+        ret += ['    {0},'.format(item) for item in items]
+        ret.append(tokens[1])
+
+        return ret

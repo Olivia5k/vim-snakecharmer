@@ -36,13 +36,9 @@ class Formatter(object):
         targets = ', '.join(t.id for t in node.targets)
         value = self.parse(node.value)
 
-        if isinstance(value, list):
-            ret = ['{0} = {1}'.format(targets, value[0])]
-            ret += value[1:]
-            return ret
-
-        line = '{0} = {1}'.format(targets, value)
-        return [line]
+        ret = ['{0} = {1}'.format(targets, value[0])]
+        ret += value[1:]
+        return ret
 
     def handle_call(self, node):
         func = node.func.id
@@ -70,6 +66,9 @@ class Formatter(object):
 
     def handle_num(self, node):
         return str(node.n)
+
+    def handle_nameconstant(self, node):
+        return str(node.value)
 
     def handle_keyword(self, node):
         return '{0}={1}'.format(node.arg, self.parse(node.value))

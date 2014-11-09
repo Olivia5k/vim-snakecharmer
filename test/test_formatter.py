@@ -81,3 +81,16 @@ class TestArgsAndKwargs(object):
             '    11,',
             ')',
         ]
+
+    def test_all(self):
+        form = Formatter(['x = hax(11, nofx=True, *coaster, **aye)'], width=20)
+        ret = form.format()
+
+        assert ret == [
+            'x = hax(',
+            '    11,',
+            '    nofx=True,',
+            '    *coaster,',
+            '    **aye,',
+            ')',
+        ]

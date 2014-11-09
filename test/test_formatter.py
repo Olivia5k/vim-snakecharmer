@@ -41,6 +41,21 @@ class TestOneLinerCalls(object):
         ]
 
 
+class TestMultilineCalls(object):
+    def test_already_formatted(self):
+        lines = [
+            'x = hax(',
+            '    11111,',
+            '    22222,',
+            ')',
+        ]
+
+        form = Formatter(lines, width=10)
+        ret = form.format()
+
+        assert ret == lines
+
+
 class TestArgsAndKwargs(object):
     def test_star_args(self):
         form = Formatter(['x = hax(*args)'], width=5)

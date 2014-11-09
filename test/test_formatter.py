@@ -67,6 +67,30 @@ class TestArgsAndKwargs(object):
             ')',
         ]
 
+    def test_star_args_with_a_list(self):
+        form = Formatter(['x = hax(*[1,2,3,])'], width=15)
+        ret = form.format()
+
+        assert ret == [
+            'x = hax(',
+            '    *[1, 2, 3],',
+            ')',
+        ]
+
+    def test_star_args_with_a_long_list(self):
+        form = Formatter(['x = hax(*[1,2,3,])'], width=5)
+        ret = form.format()
+
+        assert ret == [
+            'x = hax(',
+            '    *[,',
+            '        1,',
+            '        2,',
+            '        3,',
+            '    ],',
+            ')',
+        ]
+
     def test_star_kwargs(self):
         form = Formatter(['x = hax(**kwargs)'], width=5)
         ret = form.format()
@@ -74,6 +98,28 @@ class TestArgsAndKwargs(object):
         assert ret == [
             'x = hax(',
             '    **kwargs,',
+            ')',
+        ]
+
+    def test_star_kwargs_with_a_dict(self):
+        form = Formatter(['x = hax(**{"hax": True})'], width=15)
+        ret = form.format()
+
+        assert ret == [
+            'x = hax(',
+            '    **{"hax": True},',
+            ')',
+        ]
+
+    def test_star_kwargs_with_long_dict(self):
+        form = Formatter(['x = hax(**{"hax": True})'], width=5)
+        ret = form.format()
+
+        assert ret == [
+            'x = hax(',
+            '    **{,',
+            '        "hax": True,',
+            '    },',
             ')',
         ]
 
@@ -128,6 +174,12 @@ class TestDict(object):
             '}',
         ]
 
+    def test_below_length(self):
+        form = Formatter(['{"key": True, "key2": False}'], width=79)
+        ret = form.format()
+
+        assert ret == ['{"key": True, "key2": False}']
+
     def test_multiple_keys(self):
         form = Formatter(['{"key": True, "key2": False}'], width=5)
         ret = form.format()
@@ -147,4 +199,32 @@ class TestDict(object):
             '{',
             '    1: True,',
             '}',
+        ]
+
+
+class TestList(object):
+    def test_empty(self):
+        form = Formatter(['        []'], width=5)
+        ret = form.format()
+
+        assert ret == ['        []']
+
+    def test_below_length(self):
+        form = Formatter(['[1,2,3,4,5]'], width=79)
+        ret = form.format()
+
+        assert ret == ['[1, 2, 3, 4, 5]']
+
+    def test_above_length(self):
+        form = Formatter(['[1,2,3,4,5]'], width=3)
+        ret = form.format()
+
+        assert ret == [
+            '[',
+            '    1,',
+            '    2,',
+            '    3,',
+            '    4,',
+            '    5,',
+            ']',
         ]

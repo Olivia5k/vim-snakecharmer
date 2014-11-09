@@ -86,9 +86,9 @@ class Formatter(object):
             args += [self.handle_keyword(a) for a in node.keywords]
 
         if node.starargs:
-            args.append('*{0}'.format(node.starargs.id))
+            args += self._handle_stars('*', node.starargs)
         if node.kwargs:
-            args.append('**{0}'.format(node.kwargs.id))
+            args += self._handle_stars('**', node.kwargs)
 
         line = '{0}({1})'.format(func, ', '.join(args))
         if len(line) < self.width:
@@ -141,24 +141,67 @@ class Formatter(object):
         if not node.keys:
             return ['{}']
 
-        ret = ['{']
+        items = []
         for key, value in zip(node.keys, node.values):
-            ret.append(
-                '    {0}: {1},'.format(self.parse(key), self.parse(value))
+            items.append(
+                '{0}: {1}'.format(self.parse(key), self.parse(value))
             )
 
+        line = '{{{0}}}'.format(', '.join(items))
+        if len(line) < self.width:
+            # Line fits. Send it.
+            return [line]
+
+        ret = ['{']
+        ret += ['    {0},'.format(item) for item in items]
         ret.append('}')
 
         return ret
 
     def handle_str(self, node):
         """
+        "hehe"
+
         Handle a string.
 
         """
 
         # TODO: Single or double? Raw strings?
         return '"{0}"'.format(node.s)
+
+    def handle_name(self, node):
+        """
+        x
+
+        Handle a variable.
+
+        """
+
+        return "{0}".format(node.id)
+
+    def handle_list(self, node):
+        """
+        []
+
+        Handle a list.
+
+        """
+
+        # TODO: .ctx?
+        if not node.elts:
+            return ['[]']
+
+        items = [self.parse(x) for x in node.elts]
+        line = '[{0}]'.format(', '.join(items))
+        if len(line) < self.width:
+            # Line fits. Send it.
+            return [line]
+
+        ret = ['[']
+        ret += ['    {0},'.format(item) for item in items]
+        ret.append(']')
+
+        return ret
 
     def handle_keyword(self, node):
         """
@@ -185,3 +228,23 @@ class Formatter(object):
             return func(node)
 
         raise Exception('Unhandled node {0}'.format(node))  # pragma: nocover
+
+    def _handle_stars(self, token, items):
+        """
+        Handle parsing of starargs and starkwargs in function calls.
+
+        """
+
+        args = []
+        targets = self.parse(items)
+
+        if isinstance(targets, list):
+            args.append('{0}{1}'.format(token, targets[0]))
+            if len(targets) > 1:
+                # The x[:-1] is to remove the comma that the parser added.
+                args += [x[:-1] for x in targets[1:-1]]
+                args.append(targets[-1])
+        else:
+            args.append('{0}{1}'.format(token, targets))
+
+        return args

@@ -186,6 +186,9 @@ class Formatter(object):
     def handle_tuple(self, node):
         return self._handle_iterable('()', node.elts)
 
+    def handle_set(self, node):
+        return self._handle_iterable('{}', node.elts)
+
     def handle_keyword(self, node):
         """
         x=y

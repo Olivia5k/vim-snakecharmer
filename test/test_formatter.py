@@ -1,3 +1,5 @@
+import mock
+
 from pythonx.formatter import Formatter
 
 
@@ -306,3 +308,14 @@ class TestImport(object):
         ret = form.format()
 
         assert ret == ['import item as alias']
+
+
+class TestCrash(object):
+    @mock.patch('ast.parse')
+    def test_hax(self, parse):
+        parse.side_effect = Exception()
+
+        form = Formatter(['unisonic', 'never too late'])
+        ret = form.format()
+
+        assert ret == ['unisonic', 'never too late']

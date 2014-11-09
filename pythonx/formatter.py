@@ -16,14 +16,21 @@ class Formatter(object):
 
         """
 
-        ret = []
-        data = self.unindent(self.lines)
-        root = ast.parse('\n'.join(data))
+        try:
+            ret = []
+            data = self.unindent(self.lines)
+            root = ast.parse('\n'.join(data))
 
-        for node in root.body:
-            ret += self.parse(node)
+            for node in root.body:
+                ret += self.parse(node)
 
-        return self.reindent(ret)
+            ret = self.reindent(ret)
+
+        except Exception:
+            # If anything at all goes wrong, just return the original.
+            ret = self.lines
+
+        return ret
 
     def unindent(self, lines):
         """

@@ -272,3 +272,20 @@ class TestSet(object):
             '    5,',
             '}',
         ]
+
+
+class TestImportFrom(object):
+    def test_comma_split_to_separate_import(self):
+        form = Formatter(['from module import item, cls'])
+        ret = form.format()
+
+        assert ret == [
+            'from module import item',
+            'from module import cls',
+        ]
+
+    def test_asname(self):
+        form = Formatter(['from module import item as alias'])
+        ret = form.format()
+
+        assert ret == ['from module import item as alias']

@@ -189,6 +189,16 @@ class Formatter(object):
     def handle_set(self, node):
         return self._handle_iterable('{}', node.elts)
 
+    def handle_importfrom(self, node):
+        ret = []
+        for name in node.names:
+            imp = name.name
+            if name.asname:
+                imp = '{0} as {1}'.format(imp, name.asname)
+
+            ret.append('from {0} import {1}'.format(node.module, imp))
+        return ret
+
     def handle_keyword(self, node):
         """
         x=y

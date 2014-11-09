@@ -109,3 +109,42 @@ class TestArgsAndKwargs(object):
             '    **aye,',
             ')',
         ]
+
+
+class TestDict(object):
+    def test_empty(self):
+        form = Formatter(['        {}'], width=5)
+        ret = form.format()
+
+        assert ret == ['        {}']
+
+    def test_one_key(self):
+        form = Formatter(['{"key": True}'], width=5)
+        ret = form.format()
+
+        assert ret == [
+            '{',
+            '    "key": True,',
+            '}',
+        ]
+
+    def test_multiple_keys(self):
+        form = Formatter(['{"key": True, "key2": False}'], width=5)
+        ret = form.format()
+
+        assert ret == [
+            '{',
+            '    "key": True,',
+            '    "key2": False,',
+            '}',
+        ]
+
+    def test_non_string_key(self):
+        form = Formatter(['{1: True}'], width=5)
+        ret = form.format()
+
+        assert ret == [
+            '{',
+            '    1: True,',
+            '}',
+        ]

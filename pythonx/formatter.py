@@ -121,6 +121,45 @@ class Formatter(object):
 
         return str(node.value)
 
+    def handle_expr(self, node):
+        """
+        Handle any kind of expression that is not an assignment. Just parse it.
+
+        """
+
+        return self.parse(node.value)
+
+    def handle_dict(self, node):
+        """
+        {"key": Value}
+
+        Parse a dictionary. Will run parse on both keys and values.
+        Will not sort the keys.
+
+        """
+
+        if not node.keys:
+            return ['{}']
+
+        ret = ['{']
+        for key, value in zip(node.keys, node.values):
+            ret.append(
+                '    {0}: {1},'.format(self.parse(key), self.parse(value))
+            )
+
+        ret.append('}')
+
+        return ret
+
+    def handle_str(self, node):
+        """
+        Handle a string.
+
+        """
+
+        # TODO: Single or double? Raw strings?
+        return '"{0}"'.format(node.s)
+
     def handle_keyword(self, node):
         """
         x=y

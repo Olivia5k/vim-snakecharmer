@@ -190,14 +190,23 @@ class Formatter(object):
         return self._handle_iterable('{}', node.elts)
 
     def handle_importfrom(self, node):
-        ret = []
-        for name in node.names:
-            imp = name.name
-            if name.asname:
-                imp = '{0} as {1}'.format(imp, name.asname)
+        """
+        from module import item
 
-            ret.append('from {0} import {1}'.format(node.module, imp))
-        return ret
+        Will split comma separated imports to separate lines.
+
+        """
+
+        return self._handle_import(node, module=node.module)
+
+    def handle_import(self, node):
+        """
+        import item
+
+        Will split comma separated imports to separate lines.
+
+        """
+        return self._handle_import(node)
 
     def handle_keyword(self, node):
         """
@@ -264,4 +273,22 @@ class Formatter(object):
         ret += ['    {0},'.format(item) for item in items]
         ret.append(tokens[1])
 
+        return ret
+
+    def _handle_import(self, node, module=None):
+        """
+        Handle both kinds of import statements.
+
+        """
+
+        ret = []
+        for name in node.names:
+            imp = name.name
+            if name.asname:
+                imp = '{0} as {1}'.format(imp, name.asname)
+
+            mod = ''
+            if module:
+                mod = 'from {0} '.format(module)
+            ret.append('{mod}import {imp}'.format(imp=imp, mod=mod))
         return ret

@@ -3,16 +3,19 @@ import mock
 from pythonx.formatter import Formatter
 
 
-class TestOneLinerCalls(object):
+class BaseTest(object):
+    def setup_method(self, method):
+        self.form = Formatter()
+
+
+class TestOneLinerCalls(BaseTest):
     def test_below_width(self):
-        form = Formatter(['x = a(1)'], width=20)
-        ret = form.format()
+        ret = self.form.format(['x = a(1)'], width=20)
 
         assert ret == ['x = a(1)']
 
     def test_long_with_one_opener(self):
-        form = Formatter(['x = hax(11111)'], width=10)
-        ret = form.format()
+        ret = self.form.format(['x = hax(11111)'], width=10)
 
         assert ret == [
             'x = hax(',
@@ -21,8 +24,7 @@ class TestOneLinerCalls(object):
         ]
 
     def test_long_with_one_opener_multiple_arguments(self):
-        form = Formatter(['x = hax(11111, 22222)'], width=10)
-        ret = form.format()
+        ret = self.form.format(['x = hax(11111, 22222)'], width=10)
 
         assert ret == [
             'x = hax(',
@@ -32,8 +34,7 @@ class TestOneLinerCalls(object):
         ]
 
     def test_indented_long_with_one_opener_multiple_arguments(self):
-        form = Formatter(['    x = hax(11111, 22222)'], width=10)
-        ret = form.format()
+        ret = self.form.format(['    x = hax(11111, 22222)'], width=10)
 
         assert ret == [
             '    x = hax(',
@@ -43,7 +44,7 @@ class TestOneLinerCalls(object):
         ]
 
 
-class TestMultilineCalls(object):
+class TestMultilineCalls(BaseTest):
     def test_already_formatted(self):
         lines = [
             'x = hax(',
@@ -52,16 +53,14 @@ class TestMultilineCalls(object):
             ')',
         ]
 
-        form = Formatter(lines, width=10)
-        ret = form.format()
+        ret = self.form.format(lines, width=10)
 
         assert ret == lines
 
 
-class TestArgsAndKwargs(object):
+class TestArgsAndKwargs(BaseTest):
     def test_star_args(self):
-        form = Formatter(['x = hax(*args)'], width=5)
-        ret = form.format()
+        ret = self.form.format(['x = hax(*args)'], width=5)
 
         assert ret == [
             'x = hax(',
@@ -70,8 +69,7 @@ class TestArgsAndKwargs(object):
         ]
 
     def test_star_args_with_a_list(self):
-        form = Formatter(['x = hax(*[1,2,3,])'], width=15)
-        ret = form.format()
+        ret = self.form.format(['x = hax(*[1,2,3,])'], width=15)
 
         assert ret == [
             'x = hax(',
@@ -80,8 +78,7 @@ class TestArgsAndKwargs(object):
         ]
 
     def test_star_args_with_a_long_list(self):
-        form = Formatter(['x = hax(*[1,2,3,])'], width=5)
-        ret = form.format()
+        ret = self.form.format(['x = hax(*[1,2,3,])'], width=5)
 
         assert ret == [
             'x = hax(',
@@ -94,8 +91,7 @@ class TestArgsAndKwargs(object):
         ]
 
     def test_star_kwargs(self):
-        form = Formatter(['x = hax(**kwargs)'], width=5)
-        ret = form.format()
+        ret = self.form.format(['x = hax(**kwargs)'], width=5)
 
         assert ret == [
             'x = hax(',
@@ -104,8 +100,7 @@ class TestArgsAndKwargs(object):
         ]
 
     def test_star_kwargs_with_a_dict(self):
-        form = Formatter(['x = hax(**{"hax": True})'], width=15)
-        ret = form.format()
+        ret = self.form.format(['x = hax(**{"hax": True})'], width=15)
 
         assert ret == [
             'x = hax(',
@@ -114,8 +109,7 @@ class TestArgsAndKwargs(object):
         ]
 
     def test_star_kwargs_with_long_dict(self):
-        form = Formatter(['x = hax(**{"hax": True})'], width=5)
-        ret = form.format()
+        ret = self.form.format(['x = hax(**{"hax": True})'], width=5)
 
         assert ret == [
             'x = hax(',
@@ -126,8 +120,7 @@ class TestArgsAndKwargs(object):
         ]
 
     def test_kwargs(self):
-        form = Formatter(['x = hax(keyword=11)'], width=5)
-        ret = form.format()
+        ret = self.form.format(['x = hax(keyword=11)'], width=5)
 
         assert ret == [
             'x = hax(',
@@ -136,8 +129,7 @@ class TestArgsAndKwargs(object):
         ]
 
     def test_args(self):
-        form = Formatter(['x = hax(11)'], width=5)
-        ret = form.format()
+        ret = self.form.format(['x = hax(11)'], width=5)
 
         assert ret == [
             'x = hax(',
@@ -146,8 +138,10 @@ class TestArgsAndKwargs(object):
         ]
 
     def test_all(self):
-        form = Formatter(['x = hax(11, nofx=True, *coaster, **aye)'], width=20)
-        ret = form.format()
+        ret = self.form.format(
+            ['x = hax(11, nofx=True, *coaster, **aye)'],
+            width=20
+        )
 
         assert ret == [
             'x = hax(',
@@ -159,16 +153,14 @@ class TestArgsAndKwargs(object):
         ]
 
 
-class TestDict(object):
+class TestDict(BaseTest):
     def test_empty(self):
-        form = Formatter(['        {}'], width=5)
-        ret = form.format()
+        ret = self.form.format(['        {}'], width=5)
 
         assert ret == ['        {}']
 
     def test_one_key(self):
-        form = Formatter(['{"key": True}'], width=5)
-        ret = form.format()
+        ret = self.form.format(['{"key": True}'], width=5)
 
         assert ret == [
             '{',
@@ -177,14 +169,12 @@ class TestDict(object):
         ]
 
     def test_below_length(self):
-        form = Formatter(['{"key": True, "key2": False}'], width=79)
-        ret = form.format()
+        ret = self.form.format(['{"key": True, "key2": False}'], width=79)
 
         assert ret == ['{"key": True, "key2": False}']
 
     def test_multiple_keys(self):
-        form = Formatter(['{"key": True, "key2": False}'], width=5)
-        ret = form.format()
+        ret = self.form.format(['{"key": True, "key2": False}'], width=5)
 
         assert ret == [
             '{',
@@ -194,8 +184,7 @@ class TestDict(object):
         ]
 
     def test_non_string_key(self):
-        form = Formatter(['{1: True}'], width=5)
-        ret = form.format()
+        ret = self.form.format(['{1: True}'], width=5)
 
         assert ret == [
             '{',
@@ -204,22 +193,19 @@ class TestDict(object):
         ]
 
 
-class TestList(object):
+class TestList(BaseTest):
     def test_empty(self):
-        form = Formatter(['        []'], width=5)
-        ret = form.format()
+        ret = self.form.format(['        []'], width=5)
 
         assert ret == ['        []']
 
     def test_below_length(self):
-        form = Formatter(['[1,2,3,4,5]'], width=79)
-        ret = form.format()
+        ret = self.form.format(['[1,2,3,4,5]'], width=79)
 
         assert ret == ['[1, 2, 3, 4, 5]']
 
     def test_above_length(self):
-        form = Formatter(['[1,2,3,4,5]'], width=3)
-        ret = form.format()
+        ret = self.form.format(['[1,2,3,4,5]'], width=3)
 
         assert ret == [
             '[',
@@ -232,16 +218,14 @@ class TestList(object):
         ]
 
 
-class TestTuple(object):
+class TestTuple(BaseTest):
     def test_below_length(self):
-        form = Formatter(['(1,2,3,4,5)'], width=79)
-        ret = form.format()
+        ret = self.form.format(['(1,2,3,4,5)'], width=79)
 
         assert ret == ['(1, 2, 3, 4, 5)']
 
     def test_above_length(self):
-        form = Formatter(['(1,2,3,4,5)'], width=3)
-        ret = form.format()
+        ret = self.form.format(['(1,2,3,4,5)'], width=3)
 
         assert ret == [
             '(',
@@ -254,16 +238,14 @@ class TestTuple(object):
         ]
 
 
-class TestSet(object):
+class TestSet(BaseTest):
     def test_below_length(self):
-        form = Formatter(['{1,2,3,4,5}'], width=79)
-        ret = form.format()
+        ret = self.form.format(['{1,2,3,4,5}'], width=79)
 
         assert ret == ['{1, 2, 3, 4, 5}']
 
     def test_above_length(self):
-        form = Formatter(['{1,2,3,4,5}'], width=3)
-        ret = form.format()
+        ret = self.form.format(['{1,2,3,4,5}'], width=3)
 
         assert ret == [
             '{',
@@ -276,10 +258,9 @@ class TestSet(object):
         ]
 
 
-class TestImportFrom(object):
+class TestImportFrom(BaseTest):
     def test_comma_split_to_separate_import(self):
-        form = Formatter(['from module import item, cls'])
-        ret = form.format()
+        ret = self.form.format(['from module import item, cls'])
 
         assert ret == [
             'from module import item',
@@ -287,22 +268,19 @@ class TestImportFrom(object):
         ]
 
     def test_asname(self):
-        form = Formatter(['from module import item as alias'])
-        ret = form.format()
+        ret = self.form.format(['from module import item as alias'])
 
         assert ret == ['from module import item as alias']
 
     def test_package(self):
-        form = Formatter(['from module.package import item'])
-        ret = form.format()
+        ret = self.form.format(['from module.package import item'])
 
         assert ret == ['from module.package import item']
 
 
-class TestImport(object):
+class TestImport(BaseTest):
     def test_comma_split_to_separate_import(self):
-        form = Formatter(['import item, cls'])
-        ret = form.format()
+        ret = self.form.format(['import item, cls'])
 
         assert ret == [
             'import item',
@@ -310,24 +288,21 @@ class TestImport(object):
         ]
 
     def test_asname(self):
-        form = Formatter(['import item as alias'])
-        ret = form.format()
+        ret = self.form.format(['import item as alias'])
 
         assert ret == ['import item as alias']
 
     def test_package(self):
-        form = Formatter(['import item.package'])
-        ret = form.format()
+        ret = self.form.format(['import item.package'])
 
         assert ret == ['import item.package']
 
 
-class TestCrash(object):
+class TestCrash(BaseTest):
     @mock.patch('ast.parse')
     def test_hax(self, parse):
         parse.side_effect = Exception()
 
-        form = Formatter(['unisonic', 'never too late'])
-        ret = form.format()
+        ret = self.form.format(['unisonic', 'never too late'])
 
         assert ret == ['unisonic', 'never too late']

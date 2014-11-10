@@ -3,13 +3,7 @@ import ast
 
 
 class Formatter(object):
-    def __init__(self, lines, width=79):
-        self.lines = lines
-        self.width = width
-
-        self.indent = 0
-
-    def format(self):
+    def format(self, lines, width=79):
         """
         The main executor function. Takes all lines, formats them and returns
         the result.
@@ -18,17 +12,17 @@ class Formatter(object):
 
         try:
             ret = []
-            data = self.unindent(self.lines)
+            data, indent = self.unindent(lines)
             root = ast.parse('\n'.join(data))
 
             for node in root.body:
-                ret += self.parse(node)
+                ret += self.parse(node, width)
 
-            ret = self.reindent(ret)
+            ret = self.reindent(ret, indent)
 
         except Exception:
             # If anything at all goes wrong, just return the original.
-            ret = self.lines
+            ret = lines
 
         return ret
 
@@ -39,29 +33,29 @@ class Formatter(object):
         The ast parser will parse the code as valid Python code. The formatter
         can get partial parts of a Python file, and trying to run that would
         lead to an indentation error. This function checks the first line of
-        code, detects the indentation, store that on the instance, removes the
-        indentation from all lines, and returns them.
+        code, detects the indentation, removes the indentation from all lines,
+        and returns them.
 
         """
 
-        self.indent = re.search('\S', lines[0]).start()
-        if self.indent == 0:
-            return lines
+        indent = re.search('\S', lines[0]).start()
+        if indent == 0:
+            return lines, indent
 
-        lines = [s[self.indent:] for s in lines]
-        return lines
+        lines = [s[indent:] for s in lines]
+        return lines, indent
 
-    def reindent(self, lines):
+    def reindent(self, lines, indent):
         """
         Re-apply the indentation that was removed.
 
         """
 
-        if self.indent == 0:
+        if indent == 0:
             return lines
-        return ['{0}{1}'.format(' ' * self.indent, s) for s in lines]
+        return ['{0}{1}'.format(' ' * indent, s) for s in lines]
 
-    def parse(self, node):
+    def parse(self, node, width):
         """
         Determine what to do with a node.
 
@@ -72,11 +66,11 @@ class Formatter(object):
         cls = node.__class__.__name__.lower()
         func = getattr(self, 'handle_{0}'.format(cls), None)
         if func:
-            return func(node)
+            return func(node, width)
 
         raise Exception('Unhandled node {0}'.format(node))  # pragma: nocover
 
-    def handle_assign(self, node):
+    def handle_assign(self, node, width):
         """
         x = y
 
@@ -85,13 +79,13 @@ class Formatter(object):
         """
 
         targets = ', '.join(t.id for t in node.targets)
-        value = self.parse(node.value)
+        value = self.parse(node.value, width)
 
         ret = ['{0} = {1}'.format(targets, value[0])]
         ret += value[1:]
         return ret
 
-    def handle_call(self, node):
+    def handle_call(self, node, width):
         """
         function()
 
@@ -103,17 +97,17 @@ class Formatter(object):
         func = node.func.id
         args = []
         if node.args:
-            args += [self.parse(a) for a in node.args]
+            args += [self.parse(a, width) for a in node.args]
         if node.keywords:
-            args += [self.handle_keyword(a) for a in node.keywords]
+            args += [self.handle_keyword(a, width) for a in node.keywords]
 
         if node.starargs:
-            args += self._handle_stars('*', node.starargs)
+            args += self._handle_stars('*', node.starargs, width)
         if node.kwargs:
-            args += self._handle_stars('**', node.kwargs)
+            args += self._handle_stars('**', node.kwargs, width)
 
         line = '{0}({1})'.format(func, ', '.join(args))
-        if len(line) < self.width:
+        if len(line) < width:
             # Line fits. Send it.
             return [line]
 
@@ -123,7 +117,7 @@ class Formatter(object):
 
         return ret
 
-    def handle_num(self, node):
+    def handle_num(self, node, width):
         """
         1
 
@@ -133,7 +127,7 @@ class Formatter(object):
 
         return str(node.n)
 
-    def handle_nameconstant(self, node):
+    def handle_nameconstant(self, node, width):
         """
         True
 
@@ -143,15 +137,15 @@ class Formatter(object):
 
         return str(node.value)
 
-    def handle_expr(self, node):
+    def handle_expr(self, node, width):
         """
         Handle any kind of expression that is not an assignment. Just parse it.
 
         """
 
-        return self.parse(node.value)
+        return self.parse(node.value, width)
 
-    def handle_dict(self, node):
+    def handle_dict(self, node, width):
         """
         {"key": Value}
 
@@ -166,11 +160,14 @@ class Formatter(object):
         items = []
         for key, value in zip(node.keys, node.values):
             items.append(
-                '{0}: {1}'.format(self.parse(key), self.parse(value))
+                '{0}: {1}'.format(
+                    self.parse(key, width),
+                    self.parse(value, width)
+                )
             )
 
         line = '{{{0}}}'.format(', '.join(items))
-        if len(line) < self.width:
+        if len(line) < width:
             # Line fits. Send it.
             return [line]
 
@@ -180,7 +177,7 @@ class Formatter(object):
 
         return ret
 
-    def handle_str(self, node):
+    def handle_str(self, node, width):
         """
         "hehe"
 
@@ -191,7 +188,7 @@ class Formatter(object):
         # TODO: Single or double? Raw strings?
         return '"{0}"'.format(node.s)
 
-    def handle_name(self, node):
+    def handle_name(self, node, width):
         """
         x
 
@@ -201,17 +198,17 @@ class Formatter(object):
 
         return "{0}".format(node.id)
 
-    def handle_list(self, node):
+    def handle_list(self, node, width):
         # TODO: .ctx?
-        return self._handle_iterable('[]', node.elts)
+        return self._handle_iterable('[]', node.elts, width)
 
-    def handle_tuple(self, node):
-        return self._handle_iterable('()', node.elts)
+    def handle_tuple(self, node, width):
+        return self._handle_iterable('()', node.elts, width)
 
-    def handle_set(self, node):
-        return self._handle_iterable('{}', node.elts)
+    def handle_set(self, node, width):
+        return self._handle_iterable('{}', node.elts, width)
 
-    def handle_importfrom(self, node):
+    def handle_importfrom(self, node, width):
         """
         from module import item
 
@@ -221,7 +218,7 @@ class Formatter(object):
 
         return self._handle_import(node, module=node.module)
 
-    def handle_import(self, node):
+    def handle_import(self, node, width):
         """
         import item
 
@@ -230,7 +227,7 @@ class Formatter(object):
         """
         return self._handle_import(node)
 
-    def handle_keyword(self, node):
+    def handle_keyword(self, node, width):
         """
         x=y
 
@@ -239,16 +236,16 @@ class Formatter(object):
 
         """
 
-        return '{0}={1}'.format(node.arg, self.parse(node.value))
+        return '{0}={1}'.format(node.arg, self.parse(node.value, width))
 
-    def _handle_stars(self, token, items):
+    def _handle_stars(self, token, items, width):
         """
         Handle parsing of starargs and starkwargs in function calls.
 
         """
 
         args = []
-        targets = self.parse(items)
+        targets = self.parse(items, width)
 
         if isinstance(targets, list):
             args.append('{0}{1}'.format(token, targets[0]))
@@ -261,7 +258,7 @@ class Formatter(object):
 
         return args
 
-    def _handle_iterable(self, tokens, items):
+    def _handle_iterable(self, tokens, items, width):
         """
         Handle a iterable, such as a list or a tuple.
 
@@ -270,9 +267,9 @@ class Formatter(object):
         if not items:
             return [tokens]
 
-        items = [self.parse(x) for x in items]
+        items = [self.parse(x, width) for x in items]
         line = '{1}{0}{2}'.format(', '.join(items), *tokens)
-        if len(line) < self.width:
+        if len(line) < width:
             # Line fits. Send it.
             return [line]
 

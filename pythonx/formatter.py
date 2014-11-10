@@ -61,6 +61,21 @@ class Formatter(object):
             return lines
         return ['{0}{1}'.format(' ' * self.indent, s) for s in lines]
 
+    def parse(self, node):
+        """
+        Determine what to do with a node.
+
+        Raises an Exception if no handler method is defined.
+
+        """
+
+        cls = node.__class__.__name__.lower()
+        func = getattr(self, 'handle_{0}'.format(cls), None)
+        if func:
+            return func(node)
+
+        raise Exception('Unhandled node {0}'.format(node))  # pragma: nocover
+
     def handle_assign(self, node):
         """
         x = y
@@ -225,21 +240,6 @@ class Formatter(object):
         """
 
         return '{0}={1}'.format(node.arg, self.parse(node.value))
-
-    def parse(self, node):
-        """
-        Determine what to do with a node.
-
-        Raises an Exception if no handler method is defined.
-
-        """
-
-        cls = node.__class__.__name__.lower()
-        func = getattr(self, 'handle_{0}'.format(cls), None)
-        if func:
-            return func(node)
-
-        raise Exception('Unhandled node {0}'.format(node))  # pragma: nocover
 
     def _handle_stars(self, token, items):
         """

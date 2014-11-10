@@ -292,6 +292,12 @@ class TestImportFrom(object):
 
         assert ret == ['from module import item as alias']
 
+    def test_package(self):
+        form = Formatter(['from module.package import item'])
+        ret = form.format()
+
+        assert ret == ['from module.package import item']
+
 
 class TestImport(object):
     def test_comma_split_to_separate_import(self):
@@ -308,6 +314,12 @@ class TestImport(object):
         ret = form.format()
 
         assert ret == ['import item as alias']
+
+    def test_package(self):
+        form = Formatter(['import item.package'])
+        ret = form.format()
+
+        assert ret == ['import item.package']
 
 
 class TestCrash(object):

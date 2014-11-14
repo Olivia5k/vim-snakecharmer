@@ -30,39 +30,48 @@ class Formatter(object):
 
             for block in blocks:
                 if block[0].startswith('#'):
-                    ret += self.format_comments(block, width)
+                    ret += self.format_comments("# ", block, width)
                 else:
-                    root = ast.parse('\n'.join(block))
+                    try:
+                        root = ast.parse('\n'.join(block))
 
-                    for node in root.body:
-                        ret += self.parse(node, width)
+                        for node in root.body:
+                            ret += self.parse(node, width)
+                    except SyntaxError:
+                        # If there is a syntax error in the code, we can assume
+                        # that the code is not actually code, but a paragraph
+                        # of text inside a docstring or similar. Format as
+                        # a comment but without trailing comment symbols.
+                        ret += self.format_comments("", block, width)
 
             ret = self.reindent(ret, indent)
 
         except Exception:
-            # If anything at all goes wrong, just return the original.
+            # If something goes wrong, return the original as it was. Be nice
+            # to the user.
             ret = lines
 
         return ret
 
-    def format_comments(self, lines, width):
+    def format_comments(self, token, lines, width):
         """
-        Format comments. This uses the `textwrap` stdlib module. It removes
-        "# " from the beginning of all lines, formats according to `width` and
-        appends "# " on the result.
+        Format comments. This uses the `textwrap` stdlib module. It removes the
+        `token` from the beginning of all lines, formats according to `width`
+        and appends the `token` on the result.
 
         """
 
         # Clear the existing comment symbols
         # TODO: Re to catch "#" and not just "# "
-        lines = [x.replace('# ', '') for x in lines]
+        if token:
+            lines = [x.replace(token, '') for x in lines]
 
         # Actually do the filling
         ret = textwrap.fill(
             '\n'.join(lines),
             width=width,
-            initial_indent="# ",
-            subsequent_indent="# ",
+            initial_indent=token,
+            subsequent_indent=token,
         )
 
         # Join them back and return them

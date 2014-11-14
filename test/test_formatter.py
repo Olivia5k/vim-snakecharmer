@@ -299,8 +299,22 @@ class TestImport(BaseTest):
 
 
 class TestCrash(BaseTest):
+    def test_syntax_error(self):
+        ret = self.form.format(['function('])
+
+        assert ret == ['function(']
+
+    def test_syntax_error_on_non_code(self):
+        ret = self.form.format(['foo bar baz'], width=4)
+
+        assert ret == [
+            'foo',
+            'bar',
+            'baz',
+        ]
+
     @mock.patch('ast.parse')
-    def test_hax(self, parse):
+    def test_exception_handling(self, parse):
         parse.side_effect = Exception()
 
         ret = self.form.format(['unisonic', 'never too late'])

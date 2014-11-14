@@ -390,3 +390,25 @@ class TestComments(BaseTest):
             '    x=1,',
             ')',
         ]
+
+    def test_indented_long_comment(self):
+        data = [
+            '    # You can fly, reach for the sky',
+        ]
+        ret = self.form.format(data, width=18)
+
+        assert ret == [
+            '    # You can fly,',
+            '    # reach for',
+            '    # the sky',
+        ]
+
+    def test_indented_restore(self):
+        data = [
+            '    # You can fly,',
+            '    # reach for',
+            '    # the sky',
+        ]
+        ret = self.form.format(data, width=79)
+
+        assert ret == ['    # You can fly, reach for the sky']

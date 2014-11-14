@@ -18,6 +18,10 @@ class Formatter(object):
             comment_block = False
             data, indent = self.unindent(lines)
 
+            # If the indentation changed, we need to consider this for length
+            # calculations.
+            width -= indent
+
             for line in data:
                 comment = line.startswith('#')
                 comment_block = blocks[-1] and blocks[-1][0].startswith('#')

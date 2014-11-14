@@ -306,3 +306,10 @@ class TestCrash(BaseTest):
         ret = self.form.format(['unisonic', 'never too late'])
 
         assert ret == ['unisonic', 'never too late']
+
+
+class TestComments(BaseTest):
+    def test_below_length(self):
+        ret = self.form.format(['# hehe'], width=79)
+
+        assert ret == ['# hehe']

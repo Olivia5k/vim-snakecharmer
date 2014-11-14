@@ -12,11 +12,33 @@ class Formatter(object):
 
         try:
             ret = []
+            blocks = [[]]
+            comment = False
+            comment_block = False
             data, indent = self.unindent(lines)
-            root = ast.parse('\n'.join(data))
 
-            for node in root.body:
-                ret += self.parse(node, width)
+            for line in data:
+                comment = line.startswith('#')
+                comment_block = blocks and blocks[-1] and \
+                    blocks[-1][0].startswith('#')
+
+                if comment:
+                    if not comment_block:
+                        blocks.append([])
+                    blocks[-1].append(line)
+                else:
+                    if comment_block:
+                        blocks.append([])
+                    blocks[-1].append(line)
+
+            for block in blocks:
+                if block[0].startswith('#'):
+                    ret += self.format_comments(block)
+                else:
+                    root = ast.parse('\n'.join(block))
+
+                    for node in root.body:
+                        ret += self.parse(node, width)
 
             ret = self.reindent(ret, indent)
 
@@ -25,6 +47,9 @@ class Formatter(object):
             ret = lines
 
         return ret
+
+    def format_comments(self, lines):
+        return lines
 
     def unindent(self, lines):
         """

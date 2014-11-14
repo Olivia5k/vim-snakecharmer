@@ -20,17 +20,13 @@ class Formatter(object):
 
             for line in data:
                 comment = line.startswith('#')
-                comment_block = blocks and blocks[-1] and \
-                    blocks[-1][0].startswith('#')
+                comment_block = blocks[-1] and blocks[-1][0].startswith('#')
 
-                if comment:
-                    if not comment_block and blocks[-1] != []:
-                        blocks.append([])
-                    blocks[-1].append(line)
-                else:
-                    if comment_block and blocks[-1] != []:
-                        blocks.append([])
-                    blocks[-1].append(line)
+                # If we are switching context (last line was comment, next one
+                # is not, or vice versa), we need to create a new block.
+                if blocks[-1] != [] and comment != comment_block:
+                    blocks.append([])
+                blocks[-1].append(line)
 
             for block in blocks:
                 if block[0].startswith('#'):

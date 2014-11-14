@@ -313,3 +313,66 @@ class TestComments(BaseTest):
         ret = self.form.format(['# hehe'], width=79)
 
         assert ret == ['# hehe']
+
+    def test_above_length(self):
+        ret = self.form.format(['# You can fly, reach for the sky'], width=15)
+
+        assert ret == [
+            '# You can fly,',
+            '# reach for the',
+            '# sky',
+        ]
+
+    def test_restore_length(self):
+        data = [
+            '# You can fly,',
+            '# reach for the',
+            '# sky',
+        ]
+        ret = self.form.format(data, width=79)
+
+        assert ret == ['# You can fly, reach for the sky']
+
+    def test_restore_with_short_code(self):
+        data = [
+            '# You can fly,',
+            '# reach for the',
+            '# sky',
+            'x = a(x=1)'
+        ]
+        ret = self.form.format(data, width=79)
+
+        assert ret == [
+            '# You can fly, reach for the sky',
+            'x = a(x=1)',
+        ]
+
+    def test_short_code_with_restore(self):
+        data = [
+            'x = a(x=1)',
+            '# You can fly,',
+            '# reach for the',
+            '# sky',
+        ]
+        ret = self.form.format(data, width=79)
+
+        assert ret == [
+            'x = a(x=1)',
+            '# You can fly, reach for the sky',
+        ]
+
+    def test_long_comment_long_code(self):
+        data = [
+            '# You can fly, reach for the sky',
+            'x = angel_underneath(x=1)',
+        ]
+        ret = self.form.format(data, width=15)
+
+        assert ret == [
+            '# You can fly,',
+            '# reach for the',
+            '# sky',
+            'x = angel_underneath(',
+            '    x=1,',
+            ')',
+        ]

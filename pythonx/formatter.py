@@ -1,5 +1,6 @@
 import re
 import ast
+import textwrap
 
 
 class Formatter(object):
@@ -23,17 +24,17 @@ class Formatter(object):
                     blocks[-1][0].startswith('#')
 
                 if comment:
-                    if not comment_block:
+                    if not comment_block and blocks[-1] != []:
                         blocks.append([])
                     blocks[-1].append(line)
                 else:
-                    if comment_block:
+                    if comment_block and blocks[-1] != []:
                         blocks.append([])
                     blocks[-1].append(line)
 
             for block in blocks:
                 if block[0].startswith('#'):
-                    ret += self.format_comments(block)
+                    ret += self.format_comments(block, width)
                 else:
                     root = ast.parse('\n'.join(block))
 
@@ -48,8 +49,28 @@ class Formatter(object):
 
         return ret
 
-    def format_comments(self, lines):
-        return lines
+    def format_comments(self, lines, width):
+        """
+        Format comments. This uses the `textwrap` stdlib module. It removes
+        "# " from the beginning of all lines, formats according to `width` and
+        appends "# " on the result.
+
+        """
+
+        # Clear the existing comment symbols
+        # TODO: Re to catch "#" and not just "# "
+        lines = [x.replace('# ', '') for x in lines]
+
+        # Actually do the filling
+        ret = textwrap.fill(
+            '\n'.join(lines),
+            width=width,
+            initial_indent="# ",
+            subsequent_indent="# ",
+        )
+
+        # Join them back and return them
+        return ret.split('\n')
 
     def unindent(self, lines):
         """

@@ -1,7 +1,7 @@
 " Function that takes the argument from an __init__ constructor and makes sure
 " that there are assigments for all of them
 function! SnakeArgs() abort " {{{
-  if getline('.') !~ 'def __init__(self, \w.*)'
+  if getline('.') !~ 'def __init__(self, \w.*)' || &readonly == 1
     return
   endif
 
@@ -69,7 +69,7 @@ endfunction " }}}
 " Function that looks at the above test to see if there are mocks, and if so
 " checks if the mock arguments have been properly provided
 function! SnakeMockArgs() " {{{
-  if getline('.') !~ '@mock.patch('
+  if getline('.') !~ '@mock.patch(' || &readonly == 1
     return
   endif
   let test_lnr = search('def test_', 'n')
